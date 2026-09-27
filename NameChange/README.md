@@ -20,13 +20,13 @@ Pipeline details: [Docs/NameChange.md](Docs/NameChange.md)
 10. Save an **after** snapshot
 11. Write a report to `Reports/`
 
-Steps 5–10 only run with `-Apply`. Admin and VIP accounts are refused unless IT passes `-AllowProtected`.
+Steps 5-10 only run with `-Apply`. Admin and VIP accounts are refused unless IT passes `-AllowProtected`.
 
 ---
 
 ## Usage
 
-**Just the name** (keeps username and email — the safest option)
+**Just the name** (keeps username and email - the safest option)
 ```powershell
 .\NameChange\Set-UserName.ps1 -Client "ClientA" -SamAccountName jsmith -NewLastName "Johnson"
 ```
@@ -64,7 +64,7 @@ Changing the username changes how they sign in, so warn them first:
 * Phones, saved passwords, mapped drives and VPN profiles holding the old username need updating
 * Mail sent to the old address still arrives (it becomes an alias), but replies come **from** the new address
 
-Not changing the username avoids all of that — the display name still updates everywhere, and it's the right call for most name changes.
+Not changing the username avoids all of that - the display name still updates everywhere, and it's the right call for most name changes.
 
 ---
 

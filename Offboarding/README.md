@@ -27,11 +27,11 @@ Pipeline details: [Docs/Offboarding.md](Docs/Offboarding.md)
 17. Remove all M365 licenses
 18. Write a report to `Reports/`
 
-A **before** and **after** snapshot of the user (groups, licenses, mailbox, OU...) is saved to `Reports/Snapshots/` around steps 5–17.
+A **before** and **after** snapshot of the user (groups, licenses, mailbox, OU...) is saved to `Reports/Snapshots/` around steps 5-17.
 
-Steps 5–17 only run with `-Apply`. Steps 14–15 only run when a `Manager` is given.
+Steps 5-17 only run with `-Apply`. Steps 14-15 only run when a `Manager` is given.
 
-**Why this order:** lock them out first (5–7), then remove access (8–11), then hand off data and hide them (12–16). Licenses go last because removing them before the mailbox is converted would delete the mailbox.
+**Why this order:** lock them out first (5-7), then remove access (8-11), then hand off data and hide them (12-16). Licenses go last because removing them before the mailbox is converted would delete the mailbox.
 
 ---
 

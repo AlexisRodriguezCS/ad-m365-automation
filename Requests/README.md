@@ -46,7 +46,7 @@ The **Status** column tells you what's happening:
    ```
 2. Permissions: HR = Contribute, approvers = Edit.
 3. Approval: either an approver changes **Status** to *Approved*, or add a Power Automate flow
-   (*When an item is created* → *Start and wait for an approval* → set Status to Approved / Rejected).
+   (*When an item is created* -> *Start and wait for an approval* -> set Status to Approved / Rejected).
 4. Add `Config/Clients/<Client>/Requests.json` (see main README).
 5. Schedule the queue every 15 minutes:
    ```powershell
@@ -72,12 +72,12 @@ A request type the automation doesn't know (renamed in the list, or a typo) is r
 
 ## Usage
 
-**Preview** — reads the list and shows what would happen. Nothing is changed and the list isn't updated:
+**Preview** - reads the list and shows what would happen. Nothing is changed and the list isn't updated:
 ```powershell
 .\Requests\Invoke-RequestQueue.ps1 -Client "ClientA"
 ```
 
-**Process** — the scheduled run:
+**Process** - the scheduled run:
 ```powershell
 .\Requests\Invoke-RequestQueue.ps1 -Client "ClientA" -Apply
 ```

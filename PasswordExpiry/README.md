@@ -17,7 +17,7 @@ Pipeline details: [Docs/PasswordExpiry.md](Docs/PasswordExpiry.md)
 7. Remember what was sent
 8. Write a report to `Reports/`
 
-Steps 6–7 only run with `-Apply`.
+Steps 6-7 only run with `-Apply`.
 
 If a day is missed (server down), the next run still sends the right reminder.
 

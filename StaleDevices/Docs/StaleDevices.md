@@ -1,4 +1,4 @@
-## Stale Devices Module – Processing Pipeline
+## Stale Devices Module - Processing Pipeline
 
 ### Overview
 
@@ -21,10 +21,10 @@ Cleans up Intune devices that stopped checking in: retire first, delete the reco
 
 **Function:** `Test-StaleDevice`
 
-* Devices named in `ExcludeDevices` → `Excluded` (kiosks, conference room PCs, spares in a drawer)
-* No check-in for `RetireAfterDays` (default 90) → `Stale`
-* Never checked in at all → `Stale`, counted as the oldest possible
-* Anything else → `Active`
+* Devices named in `ExcludeDevices` -> `Excluded` (kiosks, conference room PCs, spares in a drawer)
+* No check-in for `RetireAfterDays` (default 90) -> `Stale`
+* Never checked in at all -> `Stale`, counted as the oldest possible
+* Anything else -> `Active`
 
 ---
 
@@ -32,8 +32,8 @@ Cleans up Intune devices that stopped checking in: retire first, delete the reco
 
 **Function:** `New-StaleDevicePlan`
 
-* `DaysSinceSync ≥ DeleteAfterDays` (default 180) → **DeleteRecord**: the device is gone, remove the Intune record
-* Otherwise → **Retire**: company data, apps and mail profiles are removed the next time it checks in; personal data is untouched
+* `DaysSinceSync >= DeleteAfterDays` (default 180) -> **DeleteRecord**: the device is gone, remove the Intune record
+* Otherwise -> **Retire**: company data, apps and mail profiles are removed the next time it checks in; personal data is untouched
 * A device already showing `retirePending` isn't sent a second retire (idempotent)
 
 ---
@@ -59,8 +59,8 @@ Cleans up Intune devices that stopped checking in: retire first, delete the reco
 
 ### 6. Report
 
-* `Reports/StaleDevicesReport_<date>.txt` — problems first
-* `Reports/StaleDevices_<date>.csv` — full list for Excel
+* `Reports/StaleDevicesReport_<date>.txt` - problems first
+* `Reports/StaleDevices_<date>.csv` - full list for Excel
 * Alert if anything failed, and a second alert on a review-only run when there is something to approve
 
 ---
@@ -69,10 +69,10 @@ Cleans up Intune devices that stopped checking in: retire first, delete the reco
 
 | Key | Default | Meaning |
 |---|---|---|
-| `RetireAfterDays` | 90 | No check-in for this long → retire |
-| `DeleteAfterDays` | 180 | No check-in for this long → delete the record |
+| `RetireAfterDays` | 90 | No check-in for this long -> retire |
+| `DeleteAfterDays` | 180 | No check-in for this long -> delete the record |
 | `MaxPercentToChange` | 20 | Safety stop |
-| `ExcludeDevices` | — | Device names never touched |
+| `ExcludeDevices` | - | Device names never touched |
 
 ---
 

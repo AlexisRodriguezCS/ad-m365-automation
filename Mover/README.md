@@ -24,7 +24,7 @@ Pipeline details: [Docs/Mover.md](Docs/Mover.md)
 13. Save an **after** snapshot
 14. Write a report to `Reports/`
 
-Steps 6–13 only run with `-Apply`.
+Steps 6-13 only run with `-Apply`.
 
 Only groups starting with `GRP_ROLE_` (configurable: `ManagedGroupPrefix`) are added or removed.
 Anything granted by hand stays.

@@ -31,7 +31,7 @@ Pipeline details: [Docs/IncidentResponse.md](Docs/IncidentResponse.md)
     * Give the user new sign-in details once it's safe
 13. Alert the team (always: an incident is never routine)
 
-Steps 4–10 only run with `-Apply`. If one containment step fails, the rest still run: partly contained is better than open.
+Steps 4-10 only run with `-Apply`. If one containment step fails, the rest still run: partly contained is better than open.
 
 ---
 

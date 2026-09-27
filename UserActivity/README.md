@@ -26,7 +26,7 @@ Pipeline details: [Docs/UserActivity.md](Docs/UserActivity.md)
 4. Merge everything into one timeline, newest first
 5. Write the **summary**:
    * Disabled / locked out (and by which device) / password expired
-   * **"Password was changed on … Since then N sign-ins failed with the old password, from Outlook on iOS (12x)"**: the classic "it's not working" after a reset
+   * **"Password was changed on ... Since then N sign-ins failed with the old password, from Outlook on iOS (12x)"**: the classic "it's not working" after a reset
    * Blocked by Conditional Access (which policy), MFA not completed
    * Last successful sign-in, or none at all
 6. Save the report (`.txt`, summary + timeline) and `.csv` to `Reports/`

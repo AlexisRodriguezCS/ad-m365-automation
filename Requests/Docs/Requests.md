@@ -1,4 +1,4 @@
-## Requests Module – How It Works
+## Requests Module - How It Works
 
 ### Overview
 
@@ -6,9 +6,9 @@ A SharePoint list is the front door. The queue script is the back office.
 The same scripts IT runs by hand do the work; the queue only translates.
 
 ```
-HR fills in list ──► Approval ──► Queue (every 15 min) ──► Onboarding / Mover / Offboarding / UserAttributes
-       ▲                                                              │
-       └──────────────── Status + Result written back ◄───────────────┘
+HR fills in list --> Approval --> Queue (every 15 min) --> Onboarding / Mover / Offboarding / UserAttributes
+       ^                                                              |
+       \---------------- Status + Result written back <---------------+
 ```
 
 ---
@@ -36,7 +36,7 @@ HR fills in list ──► Approval ──► Queue (every 15 min) ──► Onb
 
 **Function:** `ConvertTo-RequestRow`
 
-* Form fields → the row each script already understands (same as a CSV row)
+* Form fields -> the row each script already understands (same as a CSV row)
 
 ---
 
@@ -44,10 +44,10 @@ HR fills in list ──► Approval ──► Queue (every 15 min) ──► Onb
 
 **Function:** `Invoke-Request`
 
-* `New hire` → `Invoke-UserOnboarding`
-* `Role change` → `Invoke-UserMover`
-* `Leaver` → `Invoke-UserOffboarding`
-* `Update info` → `Invoke-UserAttributesUpdate`
+* `New hire` -> `Invoke-UserOnboarding`
+* `Role change` -> `Invoke-UserMover`
+* `Leaver` -> `Invoke-UserOffboarding`
+* `Update info` -> `Invoke-UserAttributesUpdate`
 * Turns the script's result into one plain sentence for HR
 
 ---

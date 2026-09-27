@@ -1,4 +1,4 @@
-## User Attributes Module – Processing Pipeline
+## User Attributes Module - Processing Pipeline
 
 ### Overview
 
@@ -40,10 +40,10 @@ Changes AD attributes safely: validated, only what differs, one logged action pe
 
 ### 4. Plan
 
-**Function:** `New-UserAttributesPlan` → `Get-UserAttributeChanges`
+**Function:** `New-UserAttributesPlan` -> `Get-UserAttributeChanges`
 
 * One `SetAttribute` per value that is different (case-sensitive)
-* Nothing different → `NoChange`
+* Nothing different -> `NoChange`
 
 ---
 

@@ -18,7 +18,7 @@ function Start-Offboarding {
 
     # Skip processing if there are errors from previous steps
     if ($PipelineObject.Status -ne "Valid") {
-        Write-Log -Message "[$correlationId] [Offboarding] SKIP → $($PipelineObject.Raw.SamAccountName) : Status $($PipelineObject.Status)" `
+        Write-Log -Message "[$correlationId] [Offboarding] SKIP -> $($PipelineObject.Raw.SamAccountName) : Status $($PipelineObject.Status)" `
             -Level "WARN" -LogFile $LogFile
         return $PipelineObject
     }

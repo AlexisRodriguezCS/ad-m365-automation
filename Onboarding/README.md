@@ -24,7 +24,7 @@ Pipeline details: [Docs/Onboarding.md](Docs/Onboarding.md)
 13. Write a report to `Reports/`
 14. Show the temp passwords on screen, once
 
-Steps 7–12 and 14 only run with `-Apply`. Temp passwords and access passes are never written to logs or reports; temp passwords must be changed at first sign-in.
+Steps 7-12 and 14 only run with `-Apply`. Temp passwords and access passes are never written to logs or reports; temp passwords must be changed at first sign-in.
 
 ---
 

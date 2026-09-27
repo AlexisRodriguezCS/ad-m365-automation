@@ -15,7 +15,7 @@ A brand-new domain gives you almost nothing:
 | `Computers` | **Container** |
 | `Builtin`, `System`, `ForeignSecurityPrincipals`... | Containers |
 
-**Group Policy can't be linked to a container.** So the two places Windows puts things by default — new accounts in `CN=Users`, new domain-joined PCs in `CN=Computers` — are exactly the places your policies can't reach. Every machine that joins the domain sits outside the baseline until someone moves it.
+**Group Policy can't be linked to a container.** So the two places Windows puts things by default - new accounts in `CN=Users`, new domain-joined PCs in `CN=Computers` - are exactly the places your policies can't reach. Every machine that joins the domain sits outside the baseline until someone moves it.
 
 This script builds a real OU tree and then points the defaults at it.
 
@@ -29,7 +29,7 @@ This script builds a real OU tree and then points the defaults at it.
 4. Point new **users** and new **computers** at real OUs (`redirusr` / `redircmp`)
 5. Write a summary and a log
 
-Dry run by default: it prints what it *would* create. Add `-Apply` to build it. Safe to re-run — existing objects are left alone.
+Dry run by default: it prints what it *would* create. Add `-Apply` to build it. Safe to re-run - existing objects are left alone.
 
 ---
 
@@ -54,27 +54,27 @@ The structure file is `Config\Clients\<Client>\structure.json` if it exists, oth
 
 ```
 OU=Identity
-├── OU=Users
-│   ├── OU=Employees        ← new accounts land here (one OU per department)
-│   ├── OU=Contractors
-│   ├── OU=ServiceAccounts
-│   └── OU=Disabled         ← leavers get moved here by offboarding
-├── OU=Computers
-│   ├── OU=Workstations     ← new domain-joined PCs land here
-│   ├── OU=Laptops
-│   ├── OU=Kiosks
-│   └── OU=Disabled         ← retired hardware
-├── OU=Servers
-│   ├── OU=Application
-│   ├── OU=Database
-│   └── OU=Infrastructure
-└── OU=Groups
-    ├── OU=Role             ← GRP_ROLE_* (the only groups the scripts manage)
-    ├── OU=Security
-    └── OU=Distribution
++-- OU=Users
+|   +-- OU=Employees        <- new accounts land here (one OU per department)
+|   +-- OU=Contractors
+|   +-- OU=ServiceAccounts
+|   \-- OU=Disabled         <- leavers get moved here by offboarding
++-- OU=Computers
+|   +-- OU=Workstations     <- new domain-joined PCs land here
+|   +-- OU=Laptops
+|   +-- OU=Kiosks
+|   \-- OU=Disabled         <- retired hardware
++-- OU=Servers
+|   +-- OU=Application
+|   +-- OU=Database
+|   \-- OU=Infrastructure
+\-- OU=Groups
+    +-- OU=Role             <- GRP_ROLE_* (the only groups the scripts manage)
+    +-- OU=Security
+    \-- OU=Distribution
 ```
 
-Change it by editing the JSON — the tree is read as written, to any depth.
+Change it by editing the JSON - the tree is read as written, to any depth.
 
 ```json
 {
@@ -94,7 +94,7 @@ Change it by editing the JSON — the tree is read as written, to any depth.
 }
 ```
 
-`Path` on a group and the `Redirect` values are relative — the domain (`DC=contoso,DC=local`) is added for you, so the same file works for any client.
+`Path` on a group and the `Redirect` values are relative - the domain (`DC=contoso,DC=local`) is added for you, so the same file works for any client.
 
 ---
 

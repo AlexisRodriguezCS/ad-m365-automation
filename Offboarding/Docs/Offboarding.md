@@ -1,4 +1,4 @@
-## Offboarding Module – Processing Pipeline
+## Offboarding Module - Processing Pipeline
 
 ### Overview
 
