@@ -35,6 +35,20 @@ Every check is a function that returns **findings**. A finding is one row:
 * A DC it can't reach is one flagged row, and the rest of the DCs are still checked
 * Only needs AD, so it runs for clients with no Microsoft 365
 
+### GroupPolicy - `Get-GroupPolicyAudit`
+
+* Reads: every GPO from AD (version numbers, status, links) and each GPO's `GPT.INI` in SYSVOL. It reads AD directly because `Get-GPO` in PowerShell 7 comes back without version numbers
+* Backs up every GPO with `Backup-GPO -All` to `Backups/GroupPolicy/<date>/`, plus a `gpos.json` list to compare against next time. It only takes a new backup on the first run or when something changed, so the folder doesn't fill up with copies
+* Flags:
+  * A GPO added, edited (version went up), turned on or off, renamed, or linked somewhere new since the last backup
+  * A GPO deleted since the last backup, with the exact `Import-GPO` command to bring it back
+  * A GPO linked nowhere (it does nothing), an empty GPO, or one with every setting turned off
+  * AD and SYSVOL versions that don't match (SYSVOL probably isn't replicating), or a `GPT.INI` it can't read
+  * Default Domain Policy or Default Domain Controllers Policy missing
+* Needs the GroupPolicy module (RSAT, or run it on a DC) for `Backup-GPO`
+* Only needs AD, so it runs for clients with no Microsoft 365
+* Tested on the lab DC: first backup, nothing changed, a GPO added, edited, linked and deleted, then restored with the command from the report
+
 ### Mfa - `Get-MfaAudit`
 
 * Reads: the Graph MFA registration report

@@ -67,6 +67,7 @@ Each client config has its own `ClientId`, so **each script can have its own app
 | Incident Response | `User.ReadWrite.All`, `AuditLog.Read.All`, `UserAuthenticationMethod.Read.All`, `DelegatedPermissionGrant.ReadWrite.All` (to remove app access the user gave) | *Mail Recipients* | - | Disable, reset password |
 | User Activity | `AuditLog.Read.All`, `User.Read.All` | - | - | Read users. Event Log Readers on the PDC (optional) |
 | AD Health (`Audits -Check ADHealth`) | - | - | - | Read AD. On each DC: *Remote Management Users* and WMI read, to see services, disks, shares and the clock |
+| GPO backup (`Audits -Check GroupPolicy`) | - | - | - | Read AD and SYSVOL, which any domain user can do by default. That's also enough for `Backup-GPO` |
 | AD Structure | - | - | - | **Domain Admin, once per client.** See below |
 
 AD rights are **given on specific OUs only**, not Domain Admin.
@@ -106,6 +107,7 @@ Reports and before/after copies have personal info in them (names, groups, manag
 |---|---|---|
 | Reports, before/after copies, access review sheets | 90 days (`-Days`) | [`Setup/Remove-OldReports.ps1`](Setup/Remove-OldReports.ps1), weekly scheduled task |
 | Log files (and their `.jsonl` copies) | 365 days (`-LogDays`) | One file per day for each script. [`Setup/Remove-OldReports.ps1`](Setup/Remove-OldReports.ps1) deletes the old ones |
+| GPO backups | Kept. A new one is only taken when something changed | `Backups/GroupPolicy/`, gitignored |
 | Conditional Access backups | Kept. They're restore points, not personal info | `Backups/ConditionalAccess/`, gitignored |
 | Incident evidence | Kept until the incident is closed, then delete by hand | `Backups/Incidents/`, gitignored |
 | Temp passwords | Never saved | Only in memory |

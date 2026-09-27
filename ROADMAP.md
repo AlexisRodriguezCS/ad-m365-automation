@@ -47,6 +47,7 @@ What a business actually needs from account automation: **stay secure, stop wast
 - [x] **Demo**: one command runs a made-up employee through hire, promotion, name change, leaving and undo, and saves everything it did
 - [x] **On-prem only clients**: `"Environment": "OnPrem"` skips every Microsoft 365 step
 - [x] **Domain controller health**: one DC, FSMO roles, backups, services, disks, SYSVOL, clock, time source and replication (`Audits -Check ADHealth`)
+- [x] **GPO backup and change detection**: every GPO backed up (restorable with `Import-GPO`) when something changed, and added, edited, deleted, unlinked, empty or out-of-sync GPOs get flagged (`Audits -Check GroupPolicy`)
 
 ---
 
