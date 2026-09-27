@@ -55,7 +55,7 @@ What a business actually needs from account automation: **stay secure, stop wast
 
 ### Foundation
 - [ ] **Connect the lab to Microsoft 365**: add a test tenant and Entra Connect, so the cloud steps can be run for real too
-- [ ] **Screenshots**: add real screenshots of the demo and the lab to the READMEs
+- [x] **Real output in the README**: the full output of a demo run on the lab DC, a screenshot of the before and after page, and the OU tree
 - [ ] **Cloud only clients**: create users straight in Entra ID (`New-MgUser`) when there's no on-prem AD, so one `Environment` setting covers cloud, hybrid and on-prem
 
 ### 1. Gaps job postings ask for
