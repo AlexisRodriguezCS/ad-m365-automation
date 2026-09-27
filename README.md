@@ -36,11 +36,25 @@ domain controller built for this project.
 ```
 
 After each step it reads the account back from Active Directory and prints it, so the output shows
-what is really in AD, not what the script thinks it did:
+what is really in AD, not what the script thinks it did. This is a real run on the lab DC:
 
 ```
+ 1. HIRED
+      Name     : Jordan Avery   (jordanavery)
+      Job      : Sales Rep, Sales
+      Enabled  : True
+      Where    : OU=Sales,OU=Employees,OU=Users,OU=Identity
+      Access   : GRP_ROLE_Sales_User, GRP-AllStaff
+
+ 2. PROMOTED
+      Name     : Jordan Avery   (jordanavery)
+      Job      : Support Technician, IT   <- changed
+      Enabled  : True
+      Where    : OU=IT,OU=Employees,OU=Users,OU=Identity   <- changed
+      Access   : GRP_ROLE_IT_Helpdesk, GRP-AllStaff   <- changed
+
  3. NAME CHANGE
-      Name     : Jordan Brooks   (jordanbrooks)
+      Name     : Jordan Brooks   (jordanbrooks)   <- changed
       Job      : Support Technician, IT
       Enabled  : True
       Where    : OU=IT,OU=Employees,OU=Users,OU=Identity
@@ -48,15 +62,237 @@ what is really in AD, not what the script thinks it did:
 
  4. LEAVING
       Name     : Jordan Brooks   (jordanbrooks)
-      Enabled  : False
-      Where    : OU=Disabled,OU=Users,OU=Identity
-      Access   : none
+      Job      : Support Technician, IT
+      Enabled  : False   <- changed
+      Where    : OU=Disabled,OU=Users,OU=Identity   <- changed
+      Access   : none   <- changed
+
+ 5. UNDO
+      Name     : Jordan Brooks   (jordanbrooks)
+      Job      : Support Technician, IT
+      Enabled  : True   <- changed
+      Where    : OU=IT,OU=Employees,OU=Users,OU=Identity   <- changed
+      Access   : GRP_ROLE_IT_Helpdesk, GRP-AllStaff   <- changed
 ```
 
-<!-- Screenshots to add. Put the files in docs/images/ and remove these comment lines:
-![A full demo run](docs/images/demo-run.png)
-![The OU structure in Active Directory Users and Computers](docs/images/aduc-ous.png)
--->
+<details>
+<summary>The full output of that run (the temporary password is hidden)</summary>
+
+```
+  Employee lifecycle demo - Lab
+  LIVE: this will change Active Directory
+  This client is Active Directory only, so every Microsoft 365 step is skipped.
+  Output: C:\scripts\Demo\Output\Demo_20260927_143627
+
+======================================================================
+ 1. HIRED
+ HR sends a new starter. Account, right department, right access, temporary password.
+======================================================================
+[66276ef5] [Import-OnboardingCsv] Import -> Jordan Avery : Imported
+--------------------------------------------------------
+[66276ef5] [ConvertTo-OnboardingStandard] Normalize -> Jordan Avery: FirstName=Jordan, LastName=Avery, Title=Sales Rep, Manager=, Location=, Department=Sales
+[66276ef5] [Test-OnboardingData] Validation -> Jordan Avery: Valid
+[66276ef5] [Set-OnboardingPolicy] Policy -> Jordan Avery : DL=Sales;AllStaff | Groups=GRP_ROLE_Sales_User;GRP-AllStaff | License=
+[66276ef5] [New-OnboardingPlan] AddToGroup -> GRP_ROLE_Sales_User : PENDING
+[66276ef5] [New-OnboardingPlan] AddToGroup -> GRP-AllStaff : PENDING
+[66276ef5] [New-OnboardingIdentity] SamAccountName -> jordanavery : GENERATED
+[66276ef5] [New-OnboardingIdentity] UPN -> jordanavery@lab.local : GENERATED
+[66276ef5] [New-OnboardingIdentity] OU -> OU=Sales,OU=Employees,OU=Users,OU=Identity,DC=lab,DC=local : GENERATED
+[66276ef5] [New-OnboardingUser] CreateUser -> jordanavery : CREATED
+--------------------------------------------------------
+On-prem client: no Entra sync needed.
+[66276ef5] AddToGroup -> GRP_ROLE_Sales_User : Added to GRP_ROLE_Sales_User
+[66276ef5] AddToGroup -> GRP-AllStaff : Added to GRP-AllStaff
+
+    === Pipeline Finished ===
+    Total: 1
+    Created: 1
+    Already Exists: 0
+    Failed: 0
+    Stopped: 0
+    Total Duration: 0.3529094 sec
+Report generated: C:\scripts\Onboarding\Functions\..\..\Reports\OnboardingReport_20260927_143628.txt
+
+=== Sign-in details (shown once: access pass for day one, temp password must be changed) ===
+
+Name         Username              TempPassword     TemporaryAccessPass
+----         --------              ------------     -------------------
+Jordan Avery jordanavery@lab.local (hidden here) 
+
+      AddToGroup -> GRP_ROLE_Sales_User : Added to GRP_ROLE_Sales_User
+      AddToGroup -> GRP-AllStaff : Added to GRP-AllStaff
+      (skipped, this client has no Microsoft 365: Entra sync, Microsoft 365 license, mailbox, distribution lists, day-one access pass)
+   ... 0.5s
+   After hiring:
+      Name     : Jordan Avery   (jordanavery)
+      Job      : Sales Rep, Sales
+      Enabled  : True
+      Where    : OU=Sales,OU=Employees,OU=Users,OU=Identity
+      Access   : GRP_ROLE_Sales_User, GRP-AllStaff
+
+======================================================================
+ 2. PROMOTED
+ Moving to IT. Old access comes off, new access goes on, and they move department.
+======================================================================
+[d758178e] [New-MoverRequest] Request -> jordanavery : IT / Support Technician / Technician
+--------------------------------------------------------
+[d758178e] [Test-MoverData] Validation -> jordanavery: Valid
+[d758178e] [Get-MoverIdentity] Lookup -> jordanavery : FOUND (CN=Jordan Avery,OU=Sales,OU=Employees,OU=Users,OU=Identity,DC=lab,DC=local)
+[d758178e] [Set-OnboardingPolicy] Policy -> jordanavery : DL=IT;AllStaff | Groups=GRP_ROLE_IT_Helpdesk;GRP-AllStaff | License=
+[d758178e] [New-MoverPlan] SetAttribute -> Title: 'Sales Rep' -> 'Support Technician' : PENDING
+[d758178e] [New-MoverPlan] SetAttribute -> Department: 'Sales' -> 'IT' : PENDING
+[d758178e] [New-MoverPlan] AddToGroup -> GRP_ROLE_IT_Helpdesk : PENDING
+[d758178e] [New-MoverPlan] RemoveFromGroup -> CN=GRP_ROLE_Sales_User,OU=Groups,OU=Identity,DC=lab,DC=local : PENDING
+[d758178e] [New-MoverPlan] MoveToDepartmentOU -> OU=IT,OU=Employees,OU=Users,OU=Identity,DC=lab,DC=local : PENDING
+[d758178e] SetAttribute -> Title : 'Sales Rep' is now 'Support Technician'
+[d758178e] SetAttribute -> Department : 'Sales' is now 'IT'
+[d758178e] AddToGroup -> GRP_ROLE_IT_Helpdesk : Added to GRP_ROLE_IT_Helpdesk
+[d758178e] RemoveFromGroup -> CN=GRP_ROLE_Sales_User,OU=Groups,OU=Identity,DC=lab,DC=local : Removed from CN=GRP_ROLE_Sales_User,OU=Groups,OU=Identity,DC=lab,DC=local
+[d758178e] MoveToDepartmentOU -> OU=IT,OU=Employees,OU=Users,OU=Identity,DC=lab,DC=local : Moved
+--------------------------------------------------------
+=== Pipeline Finished === Total: 1 | Moved: 1 | Failed: 0 | Duration: 0.1786934 sec
+Report generated: C:\scripts\Mover\Functions\..\..\Reports\MoverReport_20260927_143628.txt
+      SetAttribute -> Title : 'Sales Rep' is now 'Support Technician'
+      SetAttribute -> Department : 'Sales' is now 'IT'
+      AddToGroup -> GRP_ROLE_IT_Helpdesk : Added to GRP_ROLE_IT_Helpdesk
+      RemoveFromGroup -> GRP_ROLE_Sales_User: Removed from GRP_ROLE_Sales_User
+      MoveToDepartmentOU -> OU=IT: Moved
+      (skipped, this client has no Microsoft 365: swapping the department distribution lists and the role's Microsoft 365 license)
+   ... 0.3s
+   After the role change:
+      Name     : Jordan Avery   (jordanavery)
+      Job      : Support Technician, IT   <- changed
+      Enabled  : True
+      Where    : OU=IT,OU=Employees,OU=Users,OU=Identity   <- changed
+      Access   : GRP_ROLE_IT_Helpdesk, GRP-AllStaff   <- changed
+
+======================================================================
+ 3. NAME CHANGE
+ They got married. New name, new username, and mail to the old address still arrives.
+======================================================================
+[11b428fc] [New-NameChangeRequest] Request -> jordanavery :  Brooks
+[11b428fc] [Test-NameChangeData] Validation -> jordanavery: Valid
+[11b428fc] [Get-NameChangeIdentity] Lookup -> jordanavery : FOUND (Jordan Avery -> Jordan Brooks)
+[11b428fc] [New-NameChangePlan] RenameAccount -> Jordan Brooks : PENDING
+[11b428fc] [New-NameChangePlan] ChangeLogonName -> jordanbrooks : PENDING
+[11b428fc] [New-NameChangePlan] UpdateEmail -> jordanbrooks@lab.local : PENDING
+[11b428fc] RenameAccount -> Jordan Brooks : Jordan Avery is now Jordan Brooks
+[11b428fc] ChangeLogonName -> jordanbrooks : jordanavery@lab.local is now jordanbrooks@lab.local
+[11b428fc] UpdateEmail -> jordanbrooks@lab.local : Set to jordanbrooks@lab.local (had no address before)
+=== Pipeline Finished === Total: 1 | Renamed: 1 | Duration: 0.1194775 sec
+      RenameAccount -> Jordan Brooks : Jordan Avery is now Jordan Brooks
+      ChangeLogonName -> jordanbrooks : jordanavery@lab.local is now jordanbrooks@lab.local
+      UpdateEmail -> jordanbrooks@lab.local : Set to jordanbrooks@lab.local (had no address before)
+      (skipped, this client has no Microsoft 365: pushing the new name to Microsoft 365 straight away instead of waiting for the next sync)
+   ... 0.2s
+   After the name change:
+      Name     : Jordan Brooks   (jordanbrooks)   <- changed
+      Job      : Support Technician, IT
+      Enabled  : True
+      Where    : OU=IT,OU=Employees,OU=Users,OU=Identity
+      Access   : GRP_ROLE_IT_Helpdesk, GRP-AllStaff
+
+======================================================================
+ 4. LEAVING
+ Last day. Locked out, access stripped, moved to the leavers area.
+======================================================================
+[1cd6563b] [Import-OffboardingCsv] Import -> jordanbrooks : Imported
+--------------------------------------------------------
+[1cd6563b] [Test-OffboardingData] Validation -> jordanbrooks: Valid
+[1cd6563b] [Get-OffboardingIdentity] Lookup -> jordanbrooks : FOUND (CN=Jordan Brooks,OU=IT,OU=Employees,OU=Users,OU=Identity,DC=lab,DC=local)
+[1cd6563b] [New-OffboardingPlan] DisableAccount -> jordanbrooks : PENDING
+[1cd6563b] [New-OffboardingPlan] RemoveFromGroup -> CN=GRP_ROLE_IT_Helpdesk,OU=Groups,OU=Identity,DC=lab,DC=local : PENDING
+[1cd6563b] [New-OffboardingPlan] RemoveFromGroup -> CN=GRP-AllStaff,OU=Groups,OU=Identity,DC=lab,DC=local : PENDING
+[1cd6563b] [New-OffboardingPlan] MoveToDisabledOU -> OU=Disabled,OU=Users,OU=Identity,DC=lab,DC=local : PENDING
+[1cd6563b] DisableAccount -> jordanbrooks : Disabled
+[1cd6563b] RemoveFromGroup -> CN=GRP_ROLE_IT_Helpdesk,OU=Groups,OU=Identity,DC=lab,DC=local : Removed from CN=GRP_ROLE_IT_Helpdesk,OU=Groups,OU=Identity,DC=lab,DC=local
+[1cd6563b] RemoveFromGroup -> CN=GRP-AllStaff,OU=Groups,OU=Identity,DC=lab,DC=local : Removed from CN=GRP-AllStaff,OU=Groups,OU=Identity,DC=lab,DC=local
+[1cd6563b] MoveToDisabledOU -> OU=Disabled,OU=Users,OU=Identity,DC=lab,DC=local : Moved
+--------------------------------------------------------
+
+    === Pipeline Finished ===
+    Total: 1
+    Offboarded: 1
+    Not Found: 0
+    Failed: 0
+    Stopped: 0
+    Total Duration: 0.1313221 sec
+Report generated: C:\scripts\Offboarding\Functions\..\..\Reports\OffboardingReport_20260927_143628.txt
+      DisableAccount -> jordanbrooks : Disabled
+      RemoveFromGroup -> GRP_ROLE_IT_Helpdesk: Removed from GRP_ROLE_IT_Helpdesk
+      RemoveFromGroup -> GRP-AllStaff: Removed from GRP-AllStaff
+      MoveToDisabledOU -> OU=Disabled: Moved
+      (skipped, this client has no Microsoft 365: signing them out everywhere, wiping company data from their phone, handing the mailbox and OneDrive to their manager, out of office, hiding them from the address book, freeing the license)
+   ... 0.2s
+   After offboarding:
+      Name     : Jordan Brooks   (jordanbrooks)
+      Job      : Support Technician, IT
+      Enabled  : False   <- changed
+      Where    : OU=Disabled,OU=Users,OU=Identity   <- changed
+      Access   : none   <- changed
+
+======================================================================
+ 5. UNDO
+ Wrong person. Put them back exactly as the before-snapshot recorded them.
+======================================================================
+[jordanbrooks] [Restore] EnableAccount -> jordanbrooks : PENDING
+[jordanbrooks] [Restore] AddToGroup -> CN=GRP_ROLE_IT_Helpdesk,OU=Groups,OU=Identity,DC=lab,DC=local : PENDING
+[jordanbrooks] [Restore] AddToGroup -> CN=GRP-AllStaff,OU=Groups,OU=Identity,DC=lab,DC=local : PENDING
+[jordanbrooks] [Restore] MoveToOU -> OU=IT,OU=Employees,OU=Users,OU=Identity,DC=lab,DC=local : PENDING
+[ea8d52d5] EnableAccount -> jordanbrooks : Enabled
+[ea8d52d5] AddToGroup -> CN=GRP_ROLE_IT_Helpdesk,OU=Groups,OU=Identity,DC=lab,DC=local : Added back
+[ea8d52d5] AddToGroup -> CN=GRP-AllStaff,OU=Groups,OU=Identity,DC=lab,DC=local : Added back
+[ea8d52d5] MoveToOU -> OU=IT,OU=Employees,OU=Users,OU=Identity,DC=lab,DC=local : Moved
+      EnableAccount -> jordanbrooks : Enabled
+      AddToGroup -> GRP_ROLE_IT_Helpdesk: Added back
+      AddToGroup -> GRP-AllStaff: Added back
+      MoveToOU -> OU=IT: Moved
+      (skipped, this client has no Microsoft 365: the license and mailbox type, which the report lists for a person to put back by hand)
+   ... 0.1s
+   After the undo:
+      Name     : Jordan Brooks   (jordanbrooks)
+      Job      : Support Technician, IT
+      Enabled  : True   <- changed
+      Where    : OU=IT,OU=Employees,OU=Users,OU=Identity   <- changed
+      Access   : GRP_ROLE_IT_Helpdesk, GRP-AllStaff   <- changed
+```
+</details>
+
+The same run as a web page (`changes.html`, made by [Rollback](Rollback/README.md)). Yellow rows changed:
+
+![The before and after page from the demo run](docs/images/changes-report.png)
+
+<details>
+<summary>The OUs that AD Structure built in the lab</summary>
+
+```
+lab.local
+  Identity
+    Computers
+      Disabled
+      Kiosks
+      Laptops
+      Workstations
+    Groups
+      Distribution
+      Role
+      Security
+    Servers
+      Application
+      Database
+      Infrastructure
+    Users
+      Contractors
+      Disabled
+      Employees
+        Finance
+        HR
+        IT
+        Marketing
+        Sales
+      ServiceAccounts
+```
+</details>
 
 Each run saves a folder with all the reports, a copy of the account before and after, and everything
 that was printed. See [Demo](Demo/README.md). The domain itself is built by [Lab](Lab/README.md) and
