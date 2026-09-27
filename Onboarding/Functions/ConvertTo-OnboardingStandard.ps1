@@ -19,10 +19,15 @@ function ConvertTo-OnboardingStandard
         $textInfo = (Get-Culture).TextInfo
 
         foreach ($prop in "FirstName","LastName","Title","Manager","Location") {
-            # Trim whitespace and then title case
             if (-not [string]::IsNullOrWhiteSpace($rawData.$prop)) {
                 $value = $rawData.$prop.Trim()
-                $value = $textInfo.ToTitleCase($value.ToLower())
+                # Only fix the capitals when it was typed all lower or ALL CAPS. Mixed case means
+                # someone typed it that way on purpose, and title case would break it:
+                # O'Brien -> O'brien, McDonald -> Mcdonald, IT Manager -> It Manager.
+                # Limit: "IT MANAGER" typed in all caps still comes out as "It Manager".
+                if ($value -ceq $value.ToLower() -or $value -ceq $value.ToUpper()) {
+                    $value = $textInfo.ToTitleCase($value.ToLower())
+                }
                 $rawData.$prop = $value
             }
             elseif ($null -eq $rawData.$prop) {
