@@ -83,3 +83,70 @@ Describe "Restore from snapshot" {
         (New-RestorePlan -SnapshotFile $snapshot).Status | Should -Be "NoChange"
     }
 }
+
+Describe "Change report" {
+
+    BeforeAll {
+        . "$PSScriptRoot\Stubs.ps1"
+        Remove-Module Rollback -ErrorAction SilentlyContinue
+        Import-Module "$PSScriptRoot\..\Rollback\Rollback.psm1" -Force
+
+        function Save-TestSnapshot($Folder, $Stage, $Sam, $CorrelationId, $AD) {
+            $null = New-Item -ItemType Directory -Path $Folder -Force
+            [ordered]@{ Stage = $Stage; SamAccountName = $Sam; CorrelationId = $CorrelationId; AD = $AD } |
+                ConvertTo-Json -Depth 5 | Out-File (Join-Path $Folder "$($Sam)_$($Stage.ToLower()).json")
+        }
+
+        $offboarding = Join-Path $TestDrive "Offboarding_20260919_101500"
+        Save-TestSnapshot $offboarding "Before" "jdoe" "id-1" ([ordered]@{
+            Enabled = $true; DistinguishedName = "CN=Doe\, Jane,OU=IT,DC=corp,DC=local"; Title = "Engineer"
+            Description = "<script>alert(1)</script>"
+            MemberOf = @("CN=GRP-AllStaff,DC=corp,DC=local", "CN=GRP_ROLE_IT_User,DC=corp,DC=local")
+        })
+        Save-TestSnapshot $offboarding "After" "jdoe" "id-1" ([ordered]@{
+            Enabled = $false; DistinguishedName = "CN=Doe\, Jane,OU=Disabled,DC=corp,DC=local"; Title = "Engineer"
+            Description = "<script>alert(1)</script>"
+            MemberOf = @("CN=GRP-AllStaff,DC=corp,DC=local", "CN=GRP-Leavers,DC=corp,DC=local")
+        })
+        # Stopped half way: no after copy
+        Save-TestSnapshot $offboarding "Before" "bsmith" "id-2" ([ordered]@{ Enabled = $true })
+
+        # A name change saves the before under the old username and the after under the new one
+        $nameChange = Join-Path $TestDrive "NameChange_20260918_090000"
+        Save-TestSnapshot $nameChange "Before" "jdoe" "id-3" ([ordered]@{ DisplayName = "Jane Doe" })
+        Save-TestSnapshot $nameChange "After" "jsmith" "id-3" ([ordered]@{ DisplayName = "Jane Smith" })
+
+        $out  = Join-Path $TestDrive "changes.html"
+        $null = New-ChangeReport -Path $offboarding, $nameChange -OutFile $out
+        $html = Get-Content $out -Raw
+    }
+
+    It "shows what changed and marks those rows" {
+        $html | Should -Match '<tr class="changed"><th>Account on</th><td>Yes</td><td>No</td></tr>'
+        $html | Should -Match '<tr class="changed"><th>OU</th><td>OU=IT,DC=corp,DC=local</td><td>OU=Disabled,DC=corp,DC=local</td></tr>'
+        $html | Should -Match '<tr><th>Job title</th><td>Engineer</td><td>Engineer</td></tr>'
+    }
+
+    It "lists groups taken away and added, not every group" {
+        $html | Should -Match 'class="removed">- GRP_ROLE_IT_User<'
+        $html | Should -Match 'class="added">\+ GRP-Leavers<'
+        $html | Should -Match '1 kept the same'
+        $html | Should -Not -Match 'GRP-AllStaff'
+        $html | Should -Match '4 change\(s\)'
+    }
+
+    It "pairs a renamed user by CorrelationId, and puts the runs in time order" {
+        $html | Should -Match 'jdoe \(now jsmith\)'
+        $html | Should -Match '<td>Jane Doe</td><td>Jane Smith</td>'
+        $html.IndexOf("NameChange, 2026-09-18 09:00") | Should -BeLessThan $html.IndexOf("Offboarding, 2026-09-19 10:15")
+    }
+
+    It "says so when the run stopped before the after copy" {
+        $html | Should -Match 'bsmith <small>No after copy'
+    }
+
+    It "doesn't let text from AD run as code in the page" {
+        $html | Should -Not -Match '<script>'
+        $html | Should -Match '&lt;script&gt;'
+    }
+}

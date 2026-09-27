@@ -218,9 +218,15 @@ Get-ChildItem "$root\Reports" -Filter "*.txt" -ErrorAction SilentlyContinue |
 
 $snapshotDir = Join-Path $outDir "Snapshots"
 $null = New-Item -ItemType Directory -Path $snapshotDir -Force
-Get-ChildItem "$root\Reports\Snapshots" -Recurse -Filter "$endSam*.json" -ErrorAction SilentlyContinue |
-    Where-Object { $_.LastWriteTime -ge $runStart } |
-    ForEach-Object { Copy-Item $_.FullName -Destination $snapshotDir -Force }
+# Copy each step's folder whole. The files have the same names in every step, so copying them
+# into one folder would leave only the last step's
+$runs = @(Get-ChildItem "$root\Reports\Snapshots" -Directory -ErrorAction SilentlyContinue |
+          Where-Object { $_.CreationTime -ge $runStart })
+foreach ($run in $runs) { Copy-Item $run.FullName -Destination $snapshotDir -Recurse -Force }
+
+if ($runs) {
+    $null = & "$root\Rollback\New-ChangeReport.ps1" -Path $runs.FullName -OutFile (Join-Path $outDir "changes.html")
+}
 
 # The same story as an object: what a page or another script would read
 [pscustomobject]@{
@@ -239,5 +245,6 @@ Write-Host "      demo.txt      what you just saw, word for word"
 Write-Host "      summary.json  the same story as data, for a page or another script"
 Write-Host "      1-hired.log   the full output of each step"
 Write-Host "      *Report*.txt  one report per step"
+Write-Host "      changes.html  what changed at each step, as a web page"
 Write-Host "      Snapshots\    before and after, as JSON"
 Write-Host "$('=' * 70)`n" -ForegroundColor Green

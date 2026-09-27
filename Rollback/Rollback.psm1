@@ -13,5 +13,6 @@
 # Load functions
 . $PSScriptRoot\Functions\Invoke-RestoreFromSnapshot.ps1
 . $PSScriptRoot\Functions\New-RestorePlan.ps1
+. $PSScriptRoot\Functions\New-ChangeReport.ps1
 
 Export-ModuleMember -Function *
