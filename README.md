@@ -1,18 +1,64 @@
-# Scripts
+# Identity Lifecycle Automation
 
 [![PowerShell CI](https://github.com/AlexisRodriguezCS/scripts/actions/workflows/ci.yml/badge.svg)](https://github.com/AlexisRodriguezCS/scripts/actions/workflows/ci.yml)
 
-PowerShell automation for the whole employee lifecycle in Active Directory and Microsoft 365:
-new hires, role changes, leavers, plus the security, cost and compliance checks a business runs every week.
+PowerShell automation for the identity work a help desk repeats every week — new hires, role changes,
+name changes and leavers across Active Directory and Microsoft 365 — plus the security, cost and
+compliance checks that otherwise get done by hand, late, or not at all.
 
-HR requests changes through a SharePoint list. IT can run any script directly. Nothing changes without `-Apply`.
+Three things hold throughout: **nothing changes without `-Apply`**, every change is **snapshotted
+before it happens** so it can be undone, and every failure is **reported by name** instead of being
+buried in a transcript.
 
-Built for a **hybrid** environment: users live in on-prem Active Directory and sync to Entra ID with Entra Connect; licenses, mailboxes and OneDrive are in Microsoft 365.
+HR requests changes through a SharePoint list. IT can run any script directly.
+
+Built for a **hybrid** environment: users live in on-prem Active Directory and sync to Entra ID with
+Entra Connect; licenses, mailboxes and OneDrive are in Microsoft 365. Setting `"Environment": "OnPrem"`
+skips every cloud step, so the same scripts run unchanged against an AD-only client.
 
 ```
 On-prem AD ──(Entra Connect sync)──► Entra ID ──► Exchange Online / OneDrive / Licenses
   accounts, groups, OUs                                 mailboxes, DLs, files
 ```
+
+---
+
+## See it run
+
+One command takes a single employee through their entire time at a company — hired, promoted, renamed
+after a marriage, offboarded, then restored from their before-snapshot — against a real Windows
+Server 2025 domain controller built for this repo.
+
+```powershell
+.\Demo\Invoke-Demo.ps1 -Client Lab -Apply
+```
+
+Nothing in the output is the script reporting on itself. After each chapter the account is read back
+out of Active Directory, so what you see is what is actually in the directory:
+
+```
+ 3. NAME CHANGE
+      Name     : Jordan Brooks   (jordanbrooks)
+      Job      : Support Technician, IT
+      Enabled  : True
+      Where    : OU=IT,OU=Employees,OU=Users,OU=Identity
+      Access   : GRP_ROLE_IT_Helpdesk, GRP-AllStaff
+
+ 4. LEAVING
+      Name     : Jordan Brooks   (jordanbrooks)
+      Enabled  : False
+      Where    : OU=Disabled,OU=Users,OU=Identity
+      Access   : none
+```
+
+<!-- Screenshots to add (put the files in docs/images/ and uncomment):
+![A full demo run](docs/images/demo-run.png)
+![The OU structure in Active Directory Users and Computers](docs/images/aduc-ous.png)
+-->
+
+The run leaves a dated folder behind with every report, every before/after snapshot and a word-for-word
+transcript — see [Demo](Demo/README.md). The domain it runs against is built by [Lab](Lab/README.md) and
+[AD Structure](ADStructure/README.md), so the whole environment is reproducible from scratch.
 
 ---
 
