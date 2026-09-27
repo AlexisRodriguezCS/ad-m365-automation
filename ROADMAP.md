@@ -46,6 +46,7 @@ What a business actually needs from account automation: **stay secure, stop wast
 - [x] **AD Structure**: builds a client's OUs and groups from a JSON file, and sends new users and computers to real OUs so Group Policy reaches them
 - [x] **Demo**: one command runs a made-up employee through hire, promotion, name change, leaving and undo, and saves everything it did
 - [x] **On-prem only clients**: `"Environment": "OnPrem"` skips every Microsoft 365 step
+- [x] **Domain controller health**: one DC, FSMO roles, backups, services, disks, SYSVOL, clock, time source and replication (`Audits -Check ADHealth`)
 
 ---
 

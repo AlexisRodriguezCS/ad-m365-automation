@@ -19,6 +19,11 @@ $stubs = @{
     'New-ADOrganizationalUnit'  = 'Name, Path, ProtectedFromAccidentalDeletion'
     'Get-ADGroup'               = 'Identity, Filter'
     'New-ADGroup'               = 'Name, GroupScope, GroupCategory, Path'
+    'Get-ADForest'              = 'Identity'
+    'Get-ADDomainController'    = 'Identity, Filter'
+    'Get-ADReplicationFailure'  = 'Target'
+    'Get-ADReplicationPartnerMetadata'   = 'Target'
+    'Get-ADReplicationAttributeMetadata' = 'Object, Server, Properties'
 
     # Microsoft Graph
     'Get-MgUser'                = 'UserId, Property, Filter, [switch]$All'

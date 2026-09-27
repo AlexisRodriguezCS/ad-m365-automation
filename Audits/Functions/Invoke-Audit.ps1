@@ -37,6 +37,7 @@ function Invoke-Audit {
                 "Licenses"         { Get-LicenseAudit -Config $Config -LogFile $LogFile }
                 "AccessReview"     { Get-AccessReview -Config $Config -OutputFolder "$reportDir\AccessReview_$runStamp" -LogFile $LogFile }
                 "OffboardingCheck" { Get-OffboardingCheck -Path $Path -Config $Config -LogFile $LogFile }
+                "ADHealth"         { Get-ADHealthAudit -Config $Config -LogFile $LogFile }
             })
 
             $summary = Export-AuditReport -Check $check -Findings $findings -ReportDir $reportDir -RunStamp $runStamp

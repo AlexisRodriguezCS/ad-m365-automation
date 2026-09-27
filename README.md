@@ -85,7 +85,7 @@ that was printed. See [Demo](Demo/README.md). The domain itself is built by [Lab
 | [Mailbox Size Warnings](MailboxQuota/README.md) | Emails people before their mailbox fills up (80/90/95%, once a month per level) | Daily |
 | [Inactive Accounts](InactiveAccounts/README.md) | Disables unused accounts, removes old guests (safety stop included) | Weekly |
 | [Stale Devices](StaleDevices/README.md) | Retires Intune devices that stopped checking in, deletes very old records (safety stop included) | Weekly |
-| [Audits](Audits/README.md) | MFA gaps, admin roles, standing admins (PIM), risky users, Conditional Access changes (with backups), SPF/DKIM/DMARC, mail forwarding, ownerless groups, shared mailbox access, external sharing and stale guests, expiring app secrets, wasted licenses, access reviews, offboarding check | Weekly |
+| [Audits](Audits/README.md) | Domain controller health (backups, replication, services, disks, time), MFA gaps, admin roles, standing admins (PIM), risky users, Conditional Access changes (with backups), SPF/DKIM/DMARC, mail forwarding, ownerless groups, shared mailbox access, external sharing and stale guests, expiring app secrets, wasted licenses, access reviews, offboarding check | Weekly |
 
 **IT tools** (run by hand)
 
@@ -97,7 +97,7 @@ that was printed. See [Demo](Demo/README.md). The domain itself is built by [Lab
 | [Restore from Snapshot](Rollback/README.md) | Undoes a mistake: puts a user back the way their before-snapshot recorded (account, groups, attributes, OU) |
 | [User Activity](UserActivity/README.md) | "My password doesn't work": one timeline of sign-ins, SSPR resets, lockouts and changes, with a plain-English summary of what went wrong |
 
-**Other**: [Security](SECURITY.md) (secrets, permissions, guard rails) · [Lab](Lab/README.md) (reset the test tenant) · [Setup](Setup/) (certificate, secrets, scheduled tasks) · [Roadmap](ROADMAP.md)
+**Other**: [Security](SECURITY.md) (secrets, permissions, guard rails) | [Lab](Lab/README.md) (build the test domain) | [Setup](Setup/) (certificate, secrets, scheduled tasks) | [Roadmap](ROADMAP.md)
 
 ---
 

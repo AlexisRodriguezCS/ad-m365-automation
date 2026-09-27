@@ -4,6 +4,7 @@
 
     Everything:        .\Audits\Audit.ps1 -Client "ClientA"
     One check:         .\Audits\Audit.ps1 -Client "ClientA" -Check Licenses
+    DC health:         .\Audits\Audit.ps1 -Client "ClientA" -Check ADHealth
     Offboarding check: .\Audits\Audit.ps1 -Client "ClientA" -Check OffboardingCheck -Path .\leavers.csv
 #>
 [CmdletBinding()]
@@ -11,7 +12,7 @@ param(
     [Parameter(Mandatory)]
     [string]$Client,
 
-    [ValidateSet("All", "Mfa", "AdminRoles", "MailForwarding", "AppCredentials", "ConditionalAccess", "EmailSecurity", "PrivilegedAccess", "RiskyUsers", "Groups", "SharedMailboxes", "ExternalSharing", "Licenses", "AccessReview", "OffboardingCheck")]
+    [ValidateSet("All", "ADHealth", "Mfa", "AdminRoles", "MailForwarding", "AppCredentials", "ConditionalAccess", "EmailSecurity", "PrivilegedAccess", "RiskyUsers", "Groups", "SharedMailboxes", "ExternalSharing", "Licenses", "AccessReview", "OffboardingCheck")]
     [string[]]$Check = "All",
 
     # Leavers CSV (SamAccountName), for OffboardingCheck
@@ -25,22 +26,35 @@ $Config = Get-Config -Script "Audits" -Client $Client -RootPath "$PSScriptRoot\.
 $null = New-Item -ItemType Directory -Path "$PSScriptRoot\Logs" -Force
 $LogFile = "$PSScriptRoot\Logs\Audits.log"
 
-# "All" = every check that doesn't need extra input
+# Checks that only need AD. The rest need Microsoft Graph, Exchange or SharePoint
+$adOnly = @("ADHealth", "AccessReview")
+$onPrem = $Config.Environment -eq "OnPrem"
+
+# "All" = every check that doesn't need extra input. A client with no Microsoft 365 only gets the AD ones
 $checks = if ($Check -contains "All") {
-    @("Mfa", "AdminRoles", "MailForwarding", "AppCredentials", "ConditionalAccess", "EmailSecurity", "PrivilegedAccess", "RiskyUsers", "Groups", "SharedMailboxes", "ExternalSharing", "Licenses", "AccessReview") + $(if ($Path) { "OffboardingCheck" })
+    if ($onPrem) { $adOnly }
+    else { @("ADHealth", "Mfa", "AdminRoles", "MailForwarding", "AppCredentials", "ConditionalAccess", "EmailSecurity", "PrivilegedAccess", "RiskyUsers", "Groups", "SharedMailboxes", "ExternalSharing", "Licenses", "AccessReview") + $(if ($Path) { "OffboardingCheck" }) }
 } else { $Check }
 
 if ("OffboardingCheck" -in $checks -and -not $Path) {
     throw "OffboardingCheck needs -Path to a CSV of leavers (SamAccountName column)"
 }
 
+$cloudChecks = @($checks | Where-Object { $_ -notin $adOnly })
+if ($onPrem -and $cloudChecks) {
+    throw "This client has no Microsoft 365, so these checks can't run: $($cloudChecks -join ', ')"
+}
+
 # ------------------------
 # AUTHENTICATE (only what the chosen checks need)
 # ------------------------
-Connect-MgGraph -TenantId $Config.TenantId `
-                -ClientId $Config.ClientId `
-                -CertificateThumbprint $Config.CertThumbprint `
-                -NoWelcome
+# Exchange and SharePoint checks connect on their own below; everything else in the cloud uses Graph
+if ($cloudChecks | Where-Object { $_ -notin @("MailForwarding", "SharedMailboxes", "ExternalSharing") }) {
+    Connect-MgGraph -TenantId $Config.TenantId `
+                    -ClientId $Config.ClientId `
+                    -CertificateThumbprint $Config.CertThumbprint `
+                    -NoWelcome
+}
 
 if ($checks | Where-Object { $_ -in @("MailForwarding", "SharedMailboxes") }) {
     Connect-ExchangeOnline -AppId $Config.ClientId `

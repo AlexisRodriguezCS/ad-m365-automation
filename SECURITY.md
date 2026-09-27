@@ -66,6 +66,7 @@ Each client config has its own `ClientId`, so **each script can have its own app
 | Requests | `Sites.Selected` (only the HR site), `Mail.Send` (sender mailbox) | - | - | Unlock, reset password, manage `RequestableGroups` only |
 | Incident Response | `User.ReadWrite.All`, `AuditLog.Read.All`, `UserAuthenticationMethod.Read.All`, `DelegatedPermissionGrant.ReadWrite.All` (to remove app access the user gave) | *Mail Recipients* | - | Disable, reset password |
 | User Activity | `AuditLog.Read.All`, `User.Read.All` | - | - | Read users. Event Log Readers on the PDC (optional) |
+| AD Health (`Audits -Check ADHealth`) | - | - | - | Read AD. On each DC: *Remote Management Users* and WMI read, to see services, disks, shares and the clock |
 | AD Structure | - | - | - | **Domain Admin, once per client.** See below |
 
 AD rights are **given on specific OUs only**, not Domain Admin.
