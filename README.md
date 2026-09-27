@@ -1,6 +1,6 @@
-# Identity Lifecycle Automation
+# AD and Microsoft 365 Automation
 
-[![PowerShell CI](https://github.com/AlexisRodriguezCS/scripts/actions/workflows/ci.yml/badge.svg)](https://github.com/AlexisRodriguezCS/scripts/actions/workflows/ci.yml)
+[![PowerShell CI](https://github.com/AlexisRodriguezCS/ad-m365-automation/actions/workflows/ci.yml/badge.svg)](https://github.com/AlexisRodriguezCS/ad-m365-automation/actions/workflows/ci.yml)
 
 PowerShell scripts for the account work IT does every week: new hires, role changes, name changes
 and people leaving. They work with Active Directory and Microsoft 365. There are also checks for
