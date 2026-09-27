@@ -11,6 +11,12 @@ function Set-OnboardingLicense {
         [string]$LogFile
     )
 
+    # The plan adds this step when DefaultLicense is set, but the license given is LicenseSkuId.
+    # Without it Graph fails with an error that doesn't say what's wrong
+    if (-not $Config.LicenseSkuId) {
+        throw "LicenseSkuId isn't in the Onboarding config (DefaultLicense is only the name shown in reports). Get it with Get-MgSubscribedSku"
+    }
+
     # Check if license already assigned
     $user = Get-MgUser -UserId $Identity.EntraUPN `
                        -Property "assignedLicenses" `

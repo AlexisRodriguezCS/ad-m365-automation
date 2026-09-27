@@ -112,3 +112,37 @@ Describe "Start-Offboarding" {
         Should -Invoke Remove-OffboardingLicense -Times 1 -Exactly -ModuleName Offboarding
     }
 }
+
+Describe "Remove-OffboardingLicense" {
+
+    BeforeAll {
+        . "$PSScriptRoot\Stubs.ps1"
+        Remove-Module Offboarding -ErrorAction SilentlyContinue
+        Import-Module "$PSScriptRoot\..\Offboarding\Offboarding.psm1" -Force
+        $identity = [pscustomobject]@{ EntraUPN = "jdoe@contoso.com" }
+        Mock Set-MgUserLicense {} -ModuleName Offboarding
+    }
+
+    It "removes only licenses given to the user, not ones that come from a group" {
+        Mock Get-MgUser {
+            [pscustomobject]@{ LicenseAssignmentStates = @(
+                [pscustomobject]@{ SkuId = "sku-direct"; AssignedByGroup = $null }
+                [pscustomobject]@{ SkuId = "sku-group";  AssignedByGroup = "group-1" }
+            ) }
+        } -ModuleName Offboarding
+
+        Remove-OffboardingLicense -Identity $identity -LogFile "TestDrive:\x.log" | Should -Be "Licenses removed"
+        Should -Invoke Set-MgUserLicense -ModuleName Offboarding -Times 1 -Exactly -ParameterFilter {
+            @($RemoveLicenses).Count -eq 1 -and $RemoveLicenses[0] -eq "sku-direct"
+        }
+    }
+
+    It "doesn't call Graph when every license comes from a group" {
+        Mock Get-MgUser {
+            [pscustomobject]@{ LicenseAssignmentStates = @([pscustomobject]@{ SkuId = "sku-group"; AssignedByGroup = "group-1" }) }
+        } -ModuleName Offboarding
+
+        Remove-OffboardingLicense -Identity $identity -LogFile "TestDrive:\x.log" | Should -BeLike "NoDirectLicenses*"
+        Should -Invoke Set-MgUserLicense -ModuleName Offboarding -Times 0
+    }
+}

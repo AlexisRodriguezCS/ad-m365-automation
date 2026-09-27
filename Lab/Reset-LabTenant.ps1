@@ -20,9 +20,9 @@ if (-not (Test-Path $ExcludeListPath)) {
     exit 1
 }
 
-$excludedUsers = Get-Content $ExcludeListPath |
+$excludedUsers = @(Get-Content $ExcludeListPath |
     Where-Object { $_ -match '\S' } |
-    ForEach-Object { $_.ToLower().Trim() }
+    ForEach-Object { $_.ToLower().Trim() })
 
 if (-not $excludedUsers -or $excludedUsers.Count -eq 0) {
     Write-Host "ERROR: Exclusion list is empty - aborting" -ForegroundColor Red
@@ -57,6 +57,18 @@ Write-Host "Fetching users..."
 $users = Get-MgUser -All `
     -Property "Id,UserPrincipalName,UserType,OnPremisesSyncEnabled,OnPremisesSamAccountName" `
     -Filter "userType eq 'Member'"
+
+# If none of the kept accounts are in this tenant, the list was made for a different tenant, and
+# every account here (your admin too) would be deleted. Stop instead
+$here = @($users.UserPrincipalName | Where-Object { $_ } | ForEach-Object { $_.ToLower() })
+if (-not ($excludedUsers | Where-Object { $_ -in $here })) {
+    Write-Host "ERROR: None of the accounts in $ExcludeListPath are in this tenant. Put this tenant's admin accounts in it - aborting" -ForegroundColor Red
+    exit 1
+}
+
+# Never delete the account running this
+$me = "$((Get-MgContext).Account)".ToLower()
+if ($me -and $me -notin $excludedUsers) { $excludedUsers += $me }
 
 Write-Host "Found $($users.Count) users"
 
