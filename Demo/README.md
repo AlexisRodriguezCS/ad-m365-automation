@@ -1,30 +1,30 @@
 # Demo
 
-One command runs a whole employee's story against the lab and puts everything it produced in one folder.
+One command takes a made-up employee through their whole time at a company, on the lab, and saves everything it did in one folder.
 
 ```powershell
-# Preview - changes nothing
+# Preview, changes nothing
 .\Demo\Invoke-Demo.ps1 -Client Lab
 
 # Run it
 .\Demo\Invoke-Demo.ps1 -Client Lab -Apply
 ```
 
-**Lab only.** It deletes and recreates the demo account every run, so it can be run in front of someone twice without a reset.
+**Lab only.** It deletes and recreates the demo account every run, so you can run it twice in front of someone without resetting anything.
 
 ---
 
 ## The story
 
-| | Chapter | What it shows |
+| | Step | What it shows |
 |---|---|---|
-| 1 | **Hired** | Account created in the right department with the right access and a temporary password |
-| 2 | **Promoted** | Old role access removed, new access added, moved department |
-| 3 | **Name change** | Married: new name, new username, and **mail to the old address still arrives** |
-| 4 | **Leaving** | Locked out, access stripped, moved to the leavers area |
-| 5 | **Undo** | Put back exactly as the before-snapshot recorded them |
+| 1 | **Hired** | Account created in the right department, with the right access and a temp password |
+| 2 | **Promoted** | Old role access removed, new access added, moved to the new department |
+| 3 | **Name change** | Got married: new name, new username, and **mail sent to the old address still arrives** |
+| 4 | **Leaving** | Locked out, access removed, moved to the Disabled OU |
+| 5 | **Undo** | Put back exactly how the before copy says they were |
 
-After every chapter it prints the account as it stands, read back out of Active Directory - not from the script's own output:
+After each step it reads the account back from Active Directory and prints it. So it shows what's really in AD, not what the script says it did:
 
 ```
  3. NAME CHANGE
@@ -41,6 +41,8 @@ After every chapter it prints the account as it stands, read back out of Active 
       Access   : none
 ```
 
+Anything that changed since the last step is marked `<- changed`.
+
 ---
 
 ## What you get
@@ -48,23 +50,23 @@ After every chapter it prints the account as it stands, read back out of Active 
 `Demo\Output\Demo_<date>\`
 
 ```
-demo.txt                      everything printed, word for word
+demo.txt                      everything that was printed
 OnboardingReport_*.txt        one report per step
 MoverReport_*.txt
 NameChangeReport_*.txt
 OffboardingReport_*.txt
 RestoreReport_*.txt
 Snapshots\
-    jordanbrooks_before.json  the account before it was offboarded
+    jordanbrooks_before.json  the account before offboarding
     jordanbrooks_after.json   and after
 ```
 
-Good for screenshots, and good for showing someone what a run actually leaves behind.
+Good for screenshots, and for showing someone what a run leaves behind.
 
 ---
 
 ## Requirements
 
-* The lab domain from [Lab](../Lab/README.md), with the OU structure from [AD Structure](../ADStructure/README.md)
-* A client config with `"Environment": "OnPrem"` (or a full hybrid config, in which case the cloud steps run too)
-* PowerShell 7 and the ActiveDirectory module, on the domain controller or a machine with RSAT
+* The lab domain from [Lab](../Lab/README.md), with the OUs from [AD Structure](../ADStructure/README.md)
+* A client config with `"Environment": "OnPrem"`. With a full hybrid config, the cloud steps run too
+* PowerShell 7 and the ActiveDirectory module, on the domain controller or a PC with RSAT

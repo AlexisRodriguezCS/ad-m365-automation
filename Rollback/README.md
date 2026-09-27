@@ -1,28 +1,28 @@
 # Restore from Snapshot
 
-Puts a user back the way a **before** snapshot recorded them. For mistakes: the wrong person offboarded, a role change that has to be undone, attributes changed by accident.
+Puts a user back the way a **before** copy says they were. For mistakes: the wrong person got offboarded, a role change has to be undone, or attributes got changed by accident.
 
-Every script that changes a user (onboarding excluded) saves `Reports/Snapshots/<Script>_<date>/<user>_before.json` first. This script uses that file.
+Every script that changes a user (except onboarding) saves `Reports/Snapshots/<Script>_<date>/<user>_before.json` first. This script uses that file.
 
-Pipeline details: [Docs/Rollback.md](Docs/Rollback.md)
+How it works inside: [Docs/Rollback.md](Docs/Rollback.md)
 
 ---
 
 ## Steps
 
-1. Read the snapshot
-2. Look up the user as they are today
-3. Plan **only the difference**:
-   1. Re-enable the account (if it was enabled)
-   2. Restore title, department, manager, description
-   3. Add back groups they had; remove groups they didn't have
-   4. Move back to the original OU (last, because moving changes the account's path)
+1. Read the before copy
+2. Look at the user as they are today
+3. Plan **only what's different**:
+   1. Turn the account back on (if it was on)
+   2. Put back title, department, manager and description
+   3. Add back groups they had, and remove groups they didn't have
+   4. Move them back to their old OU (last, because moving changes the account's path)
 4. Run the plan with retries
-5. Write a report, with a **DO BY HAND** list for what AD can't restore:
-   * Licenses (reassign in Microsoft 365)
-   * Mailbox type (convert back from shared)
+5. Write a report, with a **DO BY HAND** list for things AD can't put back:
+   * Licenses (give them again in Microsoft 365)
+   * Mailbox type (convert it back from shared)
 
-Step 4 only runs with `-Apply`. If the user already matches the snapshot: `NoChange`.
+Step 4 only runs with `-Apply`. If the user already matches the before copy, it says `NoChange`.
 
 ---
 
@@ -37,6 +37,6 @@ Restore:
 .\Rollback\Restore-FromSnapshot.ps1 -SnapshotFile .\Reports\Snapshots\Offboarding_20260919_101500\jdoe_before.json -Apply
 ```
 
-Snapshots are kept 90 days (see [SECURITY.md](../SECURITY.md)). A user deleted from AD can't be restored this way; use the AD Recycle Bin.
+Before copies are kept for 90 days (see [SECURITY.md](../SECURITY.md)). A user that was deleted from AD can't be restored this way. Use the AD Recycle Bin for that.
 
-**No alerts.** The scheduled scripts alert because nobody is watching them. This one is run by hand, so the result is on screen and in `Reports/RestoreReport_*.txt`; anything the restore couldn't do (licenses, mailbox type) is listed under **DO BY HAND**.
+**No alerts.** The scheduled scripts send alerts because nobody is watching them. This one is run by hand, so the result is on screen and in `Reports/RestoreReport_*.txt`. Anything it couldn't do (licenses, mailbox type) is listed under **DO BY HAND**.

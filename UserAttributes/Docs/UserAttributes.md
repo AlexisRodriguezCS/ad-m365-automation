@@ -1,57 +1,57 @@
-## User Attributes Module - Processing Pipeline
+## User Attributes - How It Works
 
 ### Overview
 
-Changes AD attributes safely: validated, only what differs, one logged action per value, before/after snapshot.
+Changes AD attributes safely: checked first, only what's different, one logged action per value, and a before and after copy.
 
 ---
 
-## Processing Order
+## Order
 
 ### 1. Request
 
 **Function:** `New-UserAttributesRequest`
 
-* Builds a pipeline object from a CSV row or from parameters
-* Keeps only the attributes that were given a value
+* Turns a CSV row or the parameters into a pipeline object
+* Only keeps the attributes that were given a value
 
 ---
 
-### 2. Test
+### 2. Check
 
 **Function:** `Test-UserAttributesData`
 
-* Username valid
+* The username is valid
 * At least one attribute
-* Only allowed attributes, nothing empty, max 128 characters
-* Manager must be a username
+* Only allowed attributes, nothing empty, 128 characters max
+* Manager has to be a username
 
 ---
 
-### 3. Lookup Identity
+### 3. Find the user
 
 **Function:** `Get-UserAttributesIdentity`
 
-* Finds the user with all managed attributes
-* Resolves the manager's username to the DN AD needs
-* `NotFound` / `Invalid` if either doesn't exist
+* Finds the user with all the attributes this script manages
+* Turns the manager's username into the DN AD needs
+* `NotFound` or `Invalid` if either one doesn't exist
 
 ---
 
 ### 4. Plan
 
-**Function:** `New-UserAttributesPlan` -> `Get-UserAttributeChanges`
+**Function:** `New-UserAttributesPlan`, which uses `Get-UserAttributeChanges`
 
-* One `SetAttribute` per value that is different (case-sensitive)
-* Nothing different -> `NoChange`
+* One `SetAttribute` for each value that's different (capital letters count)
+* If nothing is different: `NoChange`
 
 ---
 
-### 5. Execute (`-Apply` only)
+### 5. Make the changes (`-Apply` only)
 
 **Function:** `Start-UserAttributesUpdate`
 
-* Before/after snapshot
+* Before and after copy of the account
 * Runs the plan with retries (shared `Invoke-Plan`)
 
 ---
@@ -62,18 +62,18 @@ Changes AD attributes safely: validated, only what differs, one logged action pe
 
 ---
 
-## Summary Flow
+## Summary
 
 ```
-Request: one person or CSV
+Request: one person or a CSV
 
-Test: validate values
+Check: are the values ok
 
-Lookup: current values in AD
+Find: current values in AD
 
 Plan: only what's different
 
-Execute: set each value
+Change: set each value
 
-Report: old -> new, pass/fail
+Report: old value -> new value, pass or fail
 ```

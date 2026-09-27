@@ -1,26 +1,26 @@
 # Stale Devices (Intune)
 
 Cleans up laptops and phones that stopped checking in to Intune.
-Lost, replaced or forgotten devices still hold company data and clutter compliance reports.
+Lost, replaced or forgotten devices still have company data on them, and they mess up compliance reports.
 
-Pipeline details: [Docs/StaleDevices.md](Docs/StaleDevices.md)
+How it works inside: [Docs/StaleDevices.md](Docs/StaleDevices.md)
 
 ---
 
 ## Steps
 
-1. Get every Intune device and its last check-in
-2. Skip devices on the exclusion list (kiosks, spares)
+1. Get every Intune device and when it last checked in
+2. Skip devices on the exclude list (kiosks, spares)
 3. Mark as stale: no check-in for `RetireAfterDays` (default 90)
-4. Plan per stale device:
-   * **Retire**: removes company data, apps and email on its next check-in (personal data untouched). Not sent twice.
-   * **Delete record**: no check-in for `DeleteAfterDays` (default 180); the device is gone, remove it from Intune
+4. Plan for each stale device:
+   * **Retire**: removes company data, apps and email the next time it checks in (personal data is left alone). Never sent twice
+   * **Delete record**: no check-in for `DeleteAfterDays` (default 180). The device is gone, so remove it from Intune
 5. **Safety stop:** if more than `MaxPercentToChange` (default 20%) of devices would change, nothing runs
 6. Run the plan with retries
-7. Write a report + CSV (device, owner, serial, last check-in) to `Reports/`
-8. Alert if there's anything to review or anything failed
+7. Write a report and a CSV (device, owner, serial, last check-in) to `Reports/`
+8. Send an alert if there's anything to review or anything failed
 
-Steps 6 only runs with `-Apply`.
+Step 6 only runs with `-Apply`.
 
 ---
 

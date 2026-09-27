@@ -1,43 +1,43 @@
-## Offboarding Module - Processing Pipeline
+## Offboarding - How It Works
 
 ### Overview
 
-This module processes a list of leaving users through a structured pipeline.
+Takes a list of people who are leaving and runs each one through the same steps.
 It uses the same pipeline object, step runner, retries, logging and report as onboarding.
 
 ---
 
-## Processing Order
+## Order
 
 ### 1. Import
 
 **Function:** `Import-OffboardingCsv`
 
-* Reads the CSV (`SamAccountName`, optional `Manager`)
+* Reads the CSV (`SamAccountName`, and `Manager` if there is one)
 * Wraps each row in a pipeline object
 
-No data changes occur here.
+Nothing gets changed here.
 
 ---
 
-### 2. Test
+### 2. Check
 
 **Function:** `Test-OffboardingData`
 
-* `SamAccountName` is required and must be AD-safe
-* `Manager` is optional but must be a UPN
+* `SamAccountName` is required and can only have characters AD accepts
+* `Manager` is optional, but has to be a UPN
 * Sets `Status` to `Valid` or `Invalid`
 
-Invalid users are logged and skipped.
+Bad rows are logged and skipped.
 
 ---
 
-### 3. Lookup Identity
+### 3. Find the user
 
 **Function:** `Get-OffboardingIdentity`
 
-* Finds the user in AD (read-only, runs in dry run too)
-* Stores:
+* Finds the user in AD (read-only, so it runs in a dry run too)
+* Saves:
 
   * `DistinguishedName`
   * `MemberOf`
@@ -55,30 +55,30 @@ Invalid users are logged and skipped.
 
   * `DisableAccount`
   * `RevokeSessions`
-  * `RetireDevices` (Intune: remove company data from phones/laptops)
-  * `RemoveFromGroup` (one per group)
+  * `RetireDevices` (Intune: remove company data from phones and laptops)
+  * `RemoveFromGroup` (one for each group)
   * `MoveToDisabledOU`
   * `RemoveFromDistributionLists`
-  * `RemoveFromCloudGroups` (Teams / Microsoft 365 / cloud security groups; manager takes over sole ownership)
+  * `RemoveFromCloudGroups` (Teams, Microsoft 365 and cloud security groups. The manager takes over teams where the leaver was the only owner)
   * `ConvertMailbox`
   * `SetAutoReply`
-  * `GrantMailboxAccess` (manager only)
-  * `ShareOneDrive` (manager only)
+  * `GrantMailboxAccess` (only with a manager)
+  * `ShareOneDrive` (only with a manager)
   * `HideFromAddressBook`
   * `RemoveLicenses`
-* Populates `.Plan`
+* Fills in `.Plan`
 
-Nothing is changed at this stage. In dry run the pipeline stops here.
+Nothing gets changed here either. In a dry run it stops here.
 
 ---
 
-### 5. Execute (`-Apply` only)
+### 5. Make the changes (`-Apply` only)
 
 **Function:** `Start-Offboarding`
 
-* Runs each plan action with retries and backoff
+* Runs each action with retries, waiting a bit longer each time
 * Stops if the account can't be disabled
-* Other failures are recorded and the rest of the plan still runs
+* Any other failure is recorded, and the rest of the plan still runs
 * Sets `Status` to `Offboarded` or `Failed`
 
 ---
@@ -87,31 +87,31 @@ Nothing is changed at this stage. In dry run the pipeline stops here.
 
 **Function:** `New-Report` (shared)
 
-Writes a report to `Reports/` with the plan results per user.
+Writes a report to `Reports/` with what happened to each user.
 
 ---
 
-## Design Principles
+## Rules it follows
 
-* Disable first, cleanup after
-* Convert the mailbox before removing the license (or the mailbox gets deleted)
-* Every action is safe to re-run
-* Group memberships are logged before removal so they can be restored
+* Disable first, clean up after
+* Convert the mailbox before removing the license, or the mailbox gets deleted
+* Every action is safe to run again
+* Group memberships are logged before they're removed, so they can be put back
 
 ---
 
-## Summary Flow
+## Summary
 
 ```
-Import: read CSV
+Import: read the CSV
 
-Test: validate SamAccountName / Manager
+Check: SamAccountName and Manager
 
-Lookup: find the user in AD
+Find: the user in AD
 
-Plan: build the list of actions
+Plan: the list of actions
 
-Execute: disable, strip access, hand off mailbox + OneDrive, remove licenses
+Change: disable, remove access, hand off mailbox and OneDrive, remove licenses
 
-Report: log results, counts, pass/fail
+Report: what happened, counts, pass or fail
 ```
