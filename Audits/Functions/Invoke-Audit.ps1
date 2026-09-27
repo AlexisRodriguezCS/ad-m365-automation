@@ -38,6 +38,7 @@ function Invoke-Audit {
                 "AccessReview"     { Get-AccessReview -Config $Config -OutputFolder "$reportDir\AccessReview_$runStamp" -LogFile $LogFile }
                 "OffboardingCheck" { Get-OffboardingCheck -Path $Path -Config $Config -LogFile $LogFile }
                 "ADHealth"         { Get-ADHealthAudit -Config $Config -LogFile $LogFile }
+                "GroupPolicy"      { Get-GroupPolicyAudit -BackupFolder "$PSScriptRoot\..\..\Backups\GroupPolicy" -LogFile $LogFile }
             })
 
             $summary = Export-AuditReport -Check $check -Findings $findings -ReportDir $reportDir -RunStamp $runStamp

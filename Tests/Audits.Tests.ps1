@@ -439,4 +439,127 @@ Describe "Audits" {
             ($findings | Where-Object Name -eq "Time source").Reason | Should -Match "Couldn't read"
         }
     }
+
+    Context "GroupPolicy" {
+
+        BeforeAll {
+            $script:ddp = "31b2f340-016d-11d2-945f-00c04fb984f9"
+            $script:dcp = "6ac1786c-016f-11d2-945f-00c04fb984f9"
+
+            # A GPO the way AD stores it, plus a real GPT.INI in a fake SYSVOL.
+            # One number holds both versions: user in the top 16 bits, computer in the bottom 16
+            function New-TestGpo([string]$Id, [string]$Name, [int]$User = 0, [int]$Computer = 1, [int]$Flags = 0,
+                                 [int]$SysvolUser = $User, [int]$SysvolComputer = $Computer, [switch]$NoGptIni) {
+                $path = Join-Path $TestDrive "sysvol\{$Id}"
+                $null = New-Item -ItemType Directory -Path $path -Force
+                $ini  = Join-Path $path "GPT.INI"
+                if ($NoGptIni) { Remove-Item $ini -ErrorAction SilentlyContinue }
+                else { "[General]`r`nVersion=$(($SysvolUser -shl 16) + $SysvolComputer)" | Set-Content $ini }
+                [pscustomobject]@{ Name = "{$Id}"; displayName = $Name; versionNumber = ($User -shl 16) + $Computer
+                                   flags = $Flags; gPCFileSysPath = $path; whenChanged = $now }
+            }
+
+            # gPLink text, like AD stores it. ;0 is a working link, ;1 is turned off
+            function New-TestLink([string]$Target, [string[]]$Ids, [int]$Option = 0) {
+                [pscustomobject]@{ DistinguishedName = $Target
+                                   gPLink = ($Ids | ForEach-Object { "[LDAP://cn={$_},cn=policies,cn=system,DC=corp,DC=local;$Option]" }) -join "" }
+            }
+        }
+
+        BeforeEach {
+            $script:backups = Join-Path $TestDrive ([guid]::NewGuid())
+            $script:gpos    = @((New-TestGpo $ddp "Default Domain Policy" -Computer 3), (New-TestGpo $dcp "Default Domain Controllers Policy"))
+            $script:links   = @((New-TestLink "DC=corp,DC=local" $ddp), (New-TestLink "OU=Domain Controllers,DC=corp,DC=local" $dcp))
+
+            Mock Get-ADDomain { [pscustomobject]@{ DistinguishedName = "DC=corp,DC=local" } } -ModuleName Audits
+            Mock Get-ADObject { $script:gpos }  -ModuleName Audits -ParameterFilter { $SearchBase -like "CN=Policies*" }
+            Mock Get-ADObject { $script:links } -ModuleName Audits -ParameterFilter { $LDAPFilter -eq "(gPLink=*)" }
+            Mock Backup-GPO {} -ModuleName Audits
+        }
+
+        It "saves a starting backup, with versions read from AD" {
+            $findings = @(Get-GroupPolicyAudit -BackupFolder $backups)
+
+            @($findings | Where-Object Flagged).Count | Should -Be 0
+            ($findings | Where-Object Name -eq "Default Domain Policy").Detail | Should -Match "version user 0, computer 3"
+            Should -Invoke Backup-GPO -ModuleName Audits -Times 1 -Exactly
+            @(Get-ChildItem $backups -Recurse -Filter "gpos.json").Count | Should -Be 1
+        }
+
+        It "flags nothing and takes no new backup when nothing changed" {
+            $null = Get-GroupPolicyAudit -BackupFolder $backups
+            $findings = @(Get-GroupPolicyAudit -BackupFolder $backups)
+
+            # Links used to count as changed on every run, because -join and -ne ran without brackets
+            @($findings | Where-Object Flagged).Count | Should -Be 0
+            Should -Invoke Backup-GPO -ModuleName Audits -Times 1 -Exactly
+        }
+
+        It "flags new, changed and deleted GPOs against the last backup" {
+            $script:gpos += New-TestGpo "11111111-1111-1111-1111-111111111111" "Screen Lock" -User 1 -Computer 0
+            $script:links += New-TestLink "OU=Staff,DC=corp,DC=local" "11111111-1111-1111-1111-111111111111"
+            $null = Get-GroupPolicyAudit -BackupFolder $backups
+
+            # Screen Lock edited, Default Domain Controllers Policy gone, a new GPO added
+            $script:gpos = @(
+                (New-TestGpo $ddp "Default Domain Policy" -Computer 3),
+                (New-TestGpo "11111111-1111-1111-1111-111111111111" "Screen Lock" -User 2 -Computer 0),
+                (New-TestGpo "22222222-2222-2222-2222-222222222222" "Map Drives" -User 1 -Computer 0)
+            )
+            $script:links += New-TestLink "OU=Staff,DC=corp,DC=local" "22222222-2222-2222-2222-222222222222"
+
+            $findings = @(Get-GroupPolicyAudit -BackupFolder $backups)
+
+            ($findings | Where-Object Name -eq "Screen Lock").Reason | Should -Match "Changed since the last backup \(settings edited\)"
+            ($findings | Where-Object Name -eq "Map Drives").Reason  | Should -Match "New since the last backup"
+            ($findings | Where-Object { $_.Name -eq "Default Domain Controllers Policy" -and $_.Detail -like "Last seen*" }).Reason |
+                Should -Match "Import-GPO .*-CreateIfNeeded"
+            ($findings | Where-Object Name -eq "Default Domain Policy").Flagged | Should -BeFalse
+        }
+
+        It "flags GPOs that aren't linked, are empty, or have every setting turned off" {
+            $script:gpos += New-TestGpo "33333333-3333-3333-3333-333333333333" "Old Test" -User 0 -Computer 0
+            $script:gpos += New-TestGpo "44444444-4444-4444-4444-444444444444" "Parked" -Flags 3
+            $script:links += New-TestLink "OU=Staff,DC=corp,DC=local" "44444444-4444-4444-4444-444444444444"
+
+            $findings = @(Get-GroupPolicyAudit -BackupFolder $backups)
+
+            ($findings | Where-Object Name -eq "Old Test").Reason | Should -Match "Not linked anywhere"
+            ($findings | Where-Object Name -eq "Old Test").Reason | Should -Match "Empty"
+            ($findings | Where-Object Name -eq "Parked").Reason   | Should -Match "Every setting in it is turned off"
+        }
+
+        It "flags AD and SYSVOL versions that don't match, and a missing GPT.INI" {
+            $script:gpos = @(
+                (New-TestGpo $ddp "Default Domain Policy" -Computer 5 -SysvolComputer 3),
+                (New-TestGpo $dcp "Default Domain Controllers Policy" -NoGptIni)
+            )
+
+            $findings = @(Get-GroupPolicyAudit -BackupFolder $backups)
+
+            ($findings | Where-Object Name -eq "Default Domain Policy").Reason             | Should -Match "SYSVOL versions don't match"
+            ($findings | Where-Object Name -eq "Default Domain Controllers Policy").Reason | Should -Match "Can't read its GPT.INI"
+        }
+
+        It "ignores links that are turned off, and matches GUIDs whatever their capitals" {
+            # AD really stores this one with a lowercase f in the middle
+            $script:links = @(
+                (New-TestLink "DC=corp,DC=local" "31B2F340-016D-11D2-945F-00C04FB984F9"),
+                (New-TestLink "OU=Domain Controllers,DC=corp,DC=local" "6AC1786C-016F-11D2-945F-00C04fB984F9" -Option 1)
+            )
+
+            $findings = @(Get-GroupPolicyAudit -BackupFolder $backups)
+
+            ($findings | Where-Object Name -eq "Default Domain Policy").Detail             | Should -Match "linked to 1 place"
+            ($findings | Where-Object Name -eq "Default Domain Controllers Policy").Reason | Should -Match "Not linked anywhere"
+        }
+
+        It "flags a missing default policy" {
+            $script:gpos = @(New-TestGpo $ddp "Default Domain Policy" -Computer 3)
+
+            $findings = @(Get-GroupPolicyAudit -BackupFolder $backups)
+
+            ($findings | Where-Object { $_.Name -eq "Default Domain Controllers Policy" -and $_.Detail -eq "Missing" }).Reason | Should -Match "dcgpofix"
+        }
+    }
 }
