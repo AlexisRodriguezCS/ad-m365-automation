@@ -14,6 +14,11 @@ $stubs = @{
     'Remove-ADGroupMember'      = 'Identity, Members'
     'Move-ADObject'             = 'Identity, TargetPath'
     'Rename-ADObject'           = 'Identity, NewName'
+    'Get-ADDomain'              = 'Identity'
+    'Get-ADOrganizationalUnit'  = 'Identity, Filter'
+    'New-ADOrganizationalUnit'  = 'Name, Path, ProtectedFromAccidentalDeletion'
+    'Get-ADGroup'               = 'Identity, Filter'
+    'New-ADGroup'               = 'Name, GroupScope, GroupCategory, Path'
 
     # Microsoft Graph
     'Get-MgUser'                = 'UserId, Property, Filter, [switch]$All'

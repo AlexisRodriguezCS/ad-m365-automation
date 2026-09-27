@@ -25,7 +25,8 @@ function Sync-MoverDLMembership {
     $managed = @($Config.DistributionLists | Where-Object { $_ -ne $Config.DefaultDistributionList })
     $desired = @($Target -split ';' | Where-Object { $_ })
 
-    $current = @(Get-Recipient -Filter "Members -eq '$($mailbox.DistinguishedName)'" `
+    # The DN has the person's name in it (CN=Jane O'Brien,...), so double any quote
+    $current = @(Get-Recipient -Filter "Members -eq '$($mailbox.DistinguishedName -replace "'", "''")'" `
                                -RecipientTypeDetails MailUniversalDistributionGroup, MailUniversalSecurityGroup `
                                -ResultSize Unlimited -ErrorAction Stop | ForEach-Object { $_.Name })
 
