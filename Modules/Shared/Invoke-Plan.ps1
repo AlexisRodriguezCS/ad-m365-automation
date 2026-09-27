@@ -51,8 +51,8 @@ function Invoke-Plan {
                     Start-Sleep -Seconds (($retryParams.DelaySeconds * $attempt) + (Get-Random -Minimum 1 -Maximum 3))
                 }
                 else {
-                    # All retries exhausted → mark structured pipeline error
-                    Add-PipelineError -PipelineObject $PipelineObject -Step $action -Message "Failed during $action → $target" `
+                    # All retries exhausted -> mark structured pipeline error
+                    Add-PipelineError -PipelineObject $PipelineObject -Step $action -Message "Failed during $action -> $target" `
                                       -Exception $_.Exception -LogFile $LogFile
                     $actionItem.Result = "Failed"
                     Write-Log -Message "[$correlationId] $action -> $target : FAILED" -Level "ERROR" -LogFile $LogFile

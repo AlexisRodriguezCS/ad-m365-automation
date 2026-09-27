@@ -1,4 +1,4 @@
-## Inactive Accounts Module – Processing Pipeline
+## Inactive Accounts Module - Processing Pipeline
 
 ### Overview
 
@@ -31,8 +31,8 @@ Reviews every enabled account against sign-in activity. Review-only by default.
 
 **Function:** `New-InactiveAccountPlan`
 
-* Members → `DisableAccount`
-* Guests → `RemoveGuest`
+* Members -> `DisableAccount`
+* Guests -> `RemoveGuest`
 
 ---
 

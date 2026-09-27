@@ -1,4 +1,4 @@
-## Password Expiry Module – Processing Pipeline
+## Password Expiry Module - Processing Pipeline
 
 ### Overview
 
@@ -27,7 +27,7 @@ Daily reminder emails with a sent-log so each reminder goes out exactly once.
 * `AlreadySent`: this reminder is in the sent-log
 * `Due`: send it
 
-The window is picked by "days left ≤ window", not "days left = window", so a missed run catches up.
+The window is picked by "days left <= window", not "days left = window", so a missed run catches up.
 
 ---
 

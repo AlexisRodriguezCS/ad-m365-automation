@@ -22,7 +22,7 @@ Details: [Docs/Audits.md](Docs/Audits.md)
 | `ExternalSharing` | SharePoint/OneDrive sites where "anyone with the link" works without signing in; guests from domains you didn't approve; guests invited over a year ago | Company files leaking outside, and old guests nobody ever removed |
 | `EmailSecurity` | SPF, DKIM and DMARC for every domain: missing, broken (+all, two SPF records) or monitor-only | Without them anyone can send email that looks like it came from you |
 | `ConditionalAccess` | Backs up every Conditional Access policy to JSON; flags policies added, deleted or changed since the last backup | A changed policy can lock everyone out or quietly turn MFA off; the backup is the restore point |
-| `Licenses` | Unused licenses, licenses on disabled/idle accounts, cost per department | Money: often 10–20% of licenses are wasted |
+| `Licenses` | Unused licenses, licenses on disabled/idle accounts, cost per department | Money: often 10-20% of licenses are wasted |
 | `AccessReview` | One sheet per manager listing their team's access (Keep/Remove), users with no manager | Required by most audits (SOC 2, ISO 27001, HIPAA) |
 | `OffboardingCheck` | Leavers who are still enabled, in groups, or licensed | Proves offboarding actually happened |
 

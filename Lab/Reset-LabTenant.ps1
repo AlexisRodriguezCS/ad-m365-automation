@@ -9,14 +9,14 @@ param (
 Write-Host "Resetting lab tenant" -ForegroundColor Cyan
 
 if (-not $LiveRun) {
-    Write-Host "DRY RUN MODE — pass -LiveRun to perform actual deletions" -ForegroundColor Cyan
+    Write-Host "DRY RUN MODE - pass -LiveRun to perform actual deletions" -ForegroundColor Cyan
 }
 
 # ----------------------------
 # Load exclusion list
 # ----------------------------
 if (-not (Test-Path $ExcludeListPath)) {
-    Write-Host "ERROR: Exclusion file not found at $ExcludeListPath — aborting" -ForegroundColor Red
+    Write-Host "ERROR: Exclusion file not found at $ExcludeListPath - aborting" -ForegroundColor Red
     exit 1
 }
 
@@ -25,7 +25,7 @@ $excludedUsers = Get-Content $ExcludeListPath |
     ForEach-Object { $_.ToLower().Trim() }
 
 if (-not $excludedUsers -or $excludedUsers.Count -eq 0) {
-    Write-Host "ERROR: Exclusion list is empty — aborting" -ForegroundColor Red
+    Write-Host "ERROR: Exclusion list is empty - aborting" -ForegroundColor Red
     exit 1
 }
 
@@ -48,7 +48,7 @@ if ($LiveRun) {
 # Get users
 # ----------------------------
 if (-not (Get-MgContext)) {
-    Write-Host "ERROR: Not connected to Microsoft Graph — run Connect-MgGraph first" -ForegroundColor Red
+    Write-Host "ERROR: Not connected to Microsoft Graph - run Connect-MgGraph first" -ForegroundColor Red
     exit 1
 }
 

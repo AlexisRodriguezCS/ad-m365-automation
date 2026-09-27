@@ -16,7 +16,7 @@ function Start-Onboarding {
 
     # Skip processing if there are errors from previous steps
     if ($PipelineObject.Status -in @("Invalid","Failed")) {
-        Write-Log -Message "[$correlationId] [Onboarding] SKIP → $displayName : Previous errors" `
+        Write-Log -Message "[$correlationId] [Onboarding] SKIP -> $displayName : Previous errors" `
             -Level "WARN" -LogFile $LogFile
         return $PipelineObject
     }

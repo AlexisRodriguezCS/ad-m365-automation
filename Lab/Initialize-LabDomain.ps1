@@ -33,7 +33,7 @@ if (-not $NetBiosName) { $NetBiosName = ($DomainName -split '\.')[0].ToUpper() }
 $isDomainController = (Get-CimInstance Win32_ComputerSystem).DomainRole -in @(4, 5)
 
 # ------------------------------------------------------------------
-# STAGE 1 — promote this machine to a domain controller, then reboot
+# STAGE 1 - promote this machine to a domain controller, then reboot
 # ------------------------------------------------------------------
 if (-not $isDomainController) {
     Write-Host "Stage 1: promoting this server to a domain controller for $DomainName" -ForegroundColor Cyan
@@ -58,7 +58,7 @@ if (-not $isDomainController) {
 }
 
 # ------------------------------------------------------------------
-# STAGE 2 — build what the scripts expect
+# STAGE 2 - build what the scripts expect
 # ------------------------------------------------------------------
 Import-Module ActiveDirectory
 

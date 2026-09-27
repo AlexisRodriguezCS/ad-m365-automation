@@ -19,7 +19,7 @@ Pipeline details: [Docs/UserAttributes.md](Docs/UserAttributes.md)
 7. Save an **after** snapshot
 8. Write a report to `Reports/`
 
-Steps 5–7 only run with `-Apply`. If nothing is different, nothing is changed (`NoChange`).
+Steps 5-7 only run with `-Apply`. If nothing is different, nothing is changed (`NoChange`).
 
 Admin and VIP accounts (`adminCount = 1`, or on the `ProtectedAccounts` list) are refused, so an HR request can't edit them. IT can override by running the script by hand with `-AllowProtected`.
 

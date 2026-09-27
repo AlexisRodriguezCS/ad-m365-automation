@@ -1,4 +1,4 @@
-## Incident Response Module – Processing Pipeline
+## Incident Response Module - Processing Pipeline
 
 ### Overview
 
@@ -21,7 +21,7 @@ The "someone got phished" playbook, run in seconds instead of from memory. **Evi
 
 **Function:** `Save-IncidentEvidence`
 
-Written to `Backups/Incidents/<user>_<date>/` — outside `Reports/`, so the 90-day cleanup never deletes it.
+Written to `Backups/Incidents/<user>_<date>/` - outside `Reports/`, so the 90-day cleanup never deletes it.
 
 | File | What it holds | Why |
 |---|---|---|
@@ -39,21 +39,21 @@ Written to `Backups/Incidents/<user>_<date>/` — outside `Reports/`, so the 90-
 Order matters: lock the attacker out first, then stop data leaving.
 
 1. **DisableAccount**
-2. **ResetPassword** — random, nobody is told it
-3. **RevokeSessions** — existing tokens keep working until revoked, so a disabled account can still be in use without this
-4. **RevokeAppConsents** — apps the user approved
-5. **RemoveForwarding** — if the mailbox forwards outside
-6. **DisableInboxRule** — one per suspicious rule: forwards, redirects, deletes, or files mail into a folder nobody reads (RSS Feeds, Conversation History, Archive, Junk)
+2. **ResetPassword** - random, nobody is told it
+3. **RevokeSessions** - existing tokens keep working until revoked, so a disabled account can still be in use without this
+4. **RevokeAppConsents** - apps the user approved
+5. **RemoveForwarding** - if the mailbox forwards outside
+6. **DisableInboxRule** - one per suspicious rule: forwards, redirects, deletes, or files mail into a folder nobody reads (RSS Feeds, Conversation History, Archive, Junk)
 
 Rules are **disabled, not deleted**: they stay as evidence.
 
 ### Why app consents matter
 
-The modern phishing page doesn't ask for a password. It asks the user to approve an app — "Document Viewer" wanting `Mail.Read` and `offline_access`. The user clicks Accept, and the app gets its **own refresh token**.
+The modern phishing page doesn't ask for a password. It asks the user to approve an app - "Document Viewer" wanting `Mail.Read` and `offline_access`. The user clicks Accept, and the app gets its **own refresh token**.
 
 That token doesn't care that you disabled the account, reset the password and revoked sessions. It keeps reading their mail until the consent is pulled. This is why the step is in the plan at all.
 
-Only the user's **own** grants are revoked (`consentType = "Principal"`). A grant recorded as `AllPrincipals` is an admin consent covering the whole tenant — revoking that during an incident would cut every employee off a legitimate app, turning one compromised mailbox into a company-wide outage.
+Only the user's **own** grants are revoked (`consentType = "Principal"`). A grant recorded as `AllPrincipals` is an admin consent covering the whole tenant - revoking that during an incident would cut every employee off a legitimate app, turning one compromised mailbox into a company-wide outage.
 
 ---
 
@@ -70,7 +70,7 @@ Only the user's **own** grants are revoked (`consentType = "Principal"`). A gran
 
 The report ends with what only a person can judge:
 
-* MFA methods added during the window — check they're really the user's
+* MFA methods added during the window - check they're really the user's
 * Sign-ins from more than one country
 * Check sent items and anything shared recently
 * Give the user a new password or a Temporary Access Pass once you're sure the attacker is out

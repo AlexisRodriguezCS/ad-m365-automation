@@ -15,7 +15,7 @@ function ConvertTo-OnboardingStandard
         param($PipelineObject, $LogFile)
         $rawData = $PipelineObject.Raw
 
-        # Get the system’s language capitalization rules
+        # Get the system's language capitalization rules
         $textInfo = (Get-Culture).TextInfo
 
         foreach ($prop in "FirstName","LastName","Title","Manager","Location") {

@@ -24,7 +24,7 @@ One command runs a whole employee's story against the lab and puts everything it
 | 4 | **Leaving** | Locked out, access stripped, moved to the leavers area |
 | 5 | **Undo** | Put back exactly as the before-snapshot recorded them |
 
-After every chapter it prints the account as it stands, read back out of Active Directory — not from the script's own output:
+After every chapter it prints the account as it stands, read back out of Active Directory - not from the script's own output:
 
 ```
  3. NAME CHANGE

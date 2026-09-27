@@ -78,7 +78,7 @@ Describe "Start-Onboarding" {
     }
 
     # ---------------------------------------------------------------
-    # Happy path — each action type
+    # Happy path - each action type
     # ---------------------------------------------------------------
 
     It "executes WaitForEntra and records result" {

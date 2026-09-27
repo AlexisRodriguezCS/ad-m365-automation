@@ -24,7 +24,7 @@ Pipeline details: [Docs/InactiveAccounts.md](Docs/InactiveAccounts.md)
 10. Write a report + CSV to `Reports/`
 11. Alert if there's anything to review
 
-Steps 7–9 only run with `-Apply`.
+Steps 7-9 only run with `-Apply`.
 
 ---
 

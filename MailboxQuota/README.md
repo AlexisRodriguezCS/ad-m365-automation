@@ -16,7 +16,7 @@ Pipeline details: [Docs/MailboxQuota.md](Docs/MailboxQuota.md)
 6. Remember what was sent
 7. Write a report to `Reports/` (only mailboxes over a level)
 
-Steps 5–6 only run with `-Apply`. Run it once a day on a schedule.
+Steps 5-6 only run with `-Apply`. Run it once a day on a schedule.
 
 ---
 

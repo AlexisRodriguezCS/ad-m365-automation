@@ -1,4 +1,4 @@
-## Rollback Module – Processing Pipeline
+## Rollback Module - Processing Pipeline
 
 ### Overview
 
@@ -14,16 +14,16 @@ Puts a user back the way a **before** snapshot recorded them. Every script that 
 
 * Loads `Reports/Snapshots/<Script>_<date>/<user>_before.json`
 * Throws if it holds no AD section: there is nothing to restore from
-* Loads the user as they are **today** — the plan is the difference, not a blind replay
+* Loads the user as they are **today** - the plan is the difference, not a blind replay
 
 ---
 
 ### 2. Plan (order matters)
 
-1. **EnableAccount** — first, so nothing else is spent on a disabled account
-2. **SetAttribute** — title, department, manager, description, via the shared `Get-UserAttributeChanges`, so only values that actually differ are touched
-3. **AddToGroup / RemoveFromGroup** — membership back to exactly what the snapshot held
-4. **MoveToOU** — last, because moving changes the DN every earlier step used
+1. **EnableAccount** - first, so nothing else is spent on a disabled account
+2. **SetAttribute** - title, department, manager, description, via the shared `Get-UserAttributeChanges`, so only values that actually differ are touched
+3. **AddToGroup / RemoveFromGroup** - membership back to exactly what the snapshot held
+4. **MoveToOU** - last, because moving changes the DN every earlier step used
 
 Empty values in the snapshot are skipped: AD can't "set" a value to nothing.
 
@@ -33,8 +33,8 @@ Empty values in the snapshot are skipped: AD can't "set" a value to nothing.
 
 Listed in the report under **DO BY HAND**, never attempted:
 
-* **Licenses** — reassign in Microsoft 365; the snapshot records which SKUs were held
-* **Mailbox type** — converting a shared mailbox back to a user mailbox needs a license and a person's judgement
+* **Licenses** - reassign in Microsoft 365; the snapshot records which SKUs were held
+* **Mailbox type** - converting a shared mailbox back to a user mailbox needs a license and a person's judgement
 
 ---
 
@@ -48,7 +48,7 @@ Listed in the report under **DO BY HAND**, never attempted:
 
 ## Limits
 
-* A user **deleted** from AD can't be restored this way — use the AD Recycle Bin, then run this to put their groups and attributes back
+* A user **deleted** from AD can't be restored this way - use the AD Recycle Bin, then run this to put their groups and attributes back
 * Snapshots are kept 90 days (see [SECURITY.md](../../SECURITY.md))
 * No alerts: this is run by hand with someone watching the output, unlike the scheduled scripts
 

@@ -1,4 +1,4 @@
-## Mailbox Quota Module – Processing Pipeline
+## Mailbox Quota Module - Processing Pipeline
 
 ### Overview
 
@@ -25,8 +25,8 @@ Warns people before their mailbox is full, so IT hears about it before "I can't 
 
 **Function:** `Test-MailboxQuota`
 
-* Highest level in `WarnAtPercent` the mailbox has reached, e.g. 92% full → the 90% warning
-* Under every level → `Ok`, and it never appears in the report
+* Highest level in `WarnAtPercent` the mailbox has reached, e.g. 92% full -> the 90% warning
+* Under every level -> `Ok`, and it never appears in the report
 * Sent key is `mailbox | level | year-month`, so the same person gets one warning per level per month even though the script runs daily
 
 ---
@@ -51,7 +51,7 @@ Warns people before their mailbox is full, so IT hears about it before "I can't 
 
 ### 5. Report
 
-* `Reports/MailboxQuotaReport_<date>.txt` — only mailboxes over a level
+* `Reports/MailboxQuotaReport_<date>.txt` - only mailboxes over a level
 * Alert and exit code 1 if any email failed to send
 
 ---

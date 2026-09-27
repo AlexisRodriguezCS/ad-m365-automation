@@ -1,4 +1,4 @@
-## Mover Module – Processing Pipeline
+## Mover Module - Processing Pipeline
 
 ### Overview
 
@@ -60,7 +60,7 @@ Only the difference is changed.
 
 New access is added before old access is removed, and the OU move comes after group changes.
 
-**Licenses** follow the same rule as role groups: only SKUs listed in `RoleLicenseSkuIds` are managed, so a Visio or Project license bought separately is never removed. `Switch-MoverLicense` adds the new SKU and removes the old one **in a single `Set-MgUserLicense` call** — a gap with no license can start Microsoft 365's 30-day mailbox deletion timer. A usage location is set first if the account doesn't have one, because a license can't be assigned without it.
+**Licenses** follow the same rule as role groups: only SKUs listed in `RoleLicenseSkuIds` are managed, so a Visio or Project license bought separately is never removed. `Switch-MoverLicense` adds the new SKU and removes the old one **in a single `Set-MgUserLicense` call** - a gap with no license can start Microsoft 365's 30-day mailbox deletion timer. A usage location is set first if the account doesn't have one, because a license can't be assigned without it.
 
 ---
 

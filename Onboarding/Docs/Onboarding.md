@@ -1,4 +1,4 @@
-## Onboarding Module – Processing Pipeline
+## Onboarding Module - Processing Pipeline
 
 ### Overview
 
