@@ -71,6 +71,30 @@ Describe "ConvertTo-OnboardingStandard" {
         $obj.Raw.Title     | Should -Be "Software Engineer"
     }
 
+    It "keeps capitals that were typed on purpose" {
+        $obj = New-TestObject
+        $obj.Raw.FirstName = "DeShawn"
+        $obj.Raw.LastName  = "O'Brien"
+        $obj.Raw.Title     = "IT Manager"
+        $obj.Raw.Manager   = "Mary McDonald"
+
+        ConvertTo-OnboardingStandard -PipelineObject $obj -LogFile $logFile
+
+        $obj.Raw.FirstName | Should -Be "DeShawn"
+        $obj.Raw.LastName  | Should -Be "O'Brien"
+        $obj.Raw.Title     | Should -Be "IT Manager"
+        $obj.Raw.Manager   | Should -Be "Mary McDonald"
+    }
+
+    It "still fixes a name typed in all caps" {
+        $obj = New-TestObject
+        $obj.Raw.LastName = "SMITH"
+
+        ConvertTo-OnboardingStandard -PipelineObject $obj -LogFile $logFile
+
+        $obj.Raw.LastName | Should -Be "Smith"
+    }
+
     It "normalizes non-exception department correctly" {
         $obj = New-TestObject
         $obj.Raw.Department = "finance"
