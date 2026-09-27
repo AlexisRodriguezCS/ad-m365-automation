@@ -91,7 +91,7 @@ What a business actually needs from account automation: **stay secure, stop wast
 - [x] **Undo from a saved copy**: put back the account, groups, attributes and OU from a before-copy (`Rollback`)
 - [x] **Offboarding: hide from the address book**
 - [x] **Offboarding: remove from Teams and Microsoft 365 groups** (the manager takes over teams the leaver was the only owner of)
-- [ ] **Before/after HTML report**: an easy to read page made from the before/after copies, for demos and tickets
+- [x] **Before/after HTML report**: an easy to read page made from the before/after copies, for demos and tickets (`Rollback\New-ChangeReport.ps1`, and the demo makes `changes.html`)
 - [ ] **PowerShell Universal portal**: buttons to run the scripts, written only in PowerShell
 
 ---

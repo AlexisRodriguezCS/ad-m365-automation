@@ -150,3 +150,30 @@ Describe "Change report" {
         $html | Should -Match '&lt;script&gt;'
     }
 }
+
+Describe "Snapshot after a name change" {
+
+    BeforeAll {
+        . "$PSScriptRoot\Stubs.ps1"
+        . "$PSScriptRoot\..\Modules\Shared\Save-UserSnapshot.ps1"
+        function Write-Log {}
+
+        # The account only exists under the new username now
+        Mock Get-ADUser { if ($Filter -like "*'jsmith'*") { [pscustomobject]@{ Enabled = $true; DisplayName = "Jane Smith"; MemberOf = @() } } }
+        $user = [pscustomobject]@{
+            CorrelationId = "abcdef12-0000"
+            Identity      = [pscustomobject]@{ SamAccountName = "jdoe"; NewSamAccountName = "jsmith" }
+        }
+    }
+
+    It "reads the account by its new username" {
+        $file = Save-UserSnapshot -PipelineObject $user -Stage After -Folder $TestDrive
+        Split-Path $file -Leaf | Should -Be "jsmith_after.json"
+        (Get-Content $file -Raw | ConvertFrom-Json).AD.DisplayName | Should -Be "Jane Smith"
+    }
+
+    It "doesn't look for Microsoft 365 when there's no Entra account" {
+        $file = Save-UserSnapshot -PipelineObject $user -Stage After -Folder $TestDrive
+        (Get-Content $file -Raw | ConvertFrom-Json).PSObject.Properties.Name | Should -Not -Contain "EntraError"
+    }
+}

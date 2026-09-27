@@ -11,6 +11,11 @@ function Resolve-EntraUpn {
         [PSCustomObject]$Config
     )
 
+    # No Microsoft 365, so there's no Entra account. Empty tells the snapshot not to look for one
+    if ("$($Config.Environment)" -eq "OnPrem") {
+        return $null
+    }
+
     # Production: AD UPNs use a routable domain (user@contoso.com) and Entra Connect syncs them as-is.
     if ($Config.UseAdUpnForEntra -and $AdUpn) {
         return $AdUpn
