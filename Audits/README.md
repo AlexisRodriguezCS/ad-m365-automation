@@ -12,6 +12,7 @@ Details: [Docs/Audits.md](Docs/Audits.md)
 | Check | What it finds | Why it matters |
 |---|---|---|
 | `ADHealth` | Domain controller health: only one DC, FSMO roles on a server that's gone, AD never backed up (or not lately), core services stopped, disks filling up, SYSVOL or NETLOGON missing, clock drift, PDC time source, replication failing or behind | The things that take a whole domain down, found before they do |
+| `GroupPolicy` | Backs up every GPO (restorable with `Import-GPO`) whenever something changed, and flags GPOs added, edited or deleted since the last backup, GPOs linked nowhere, empty GPOs, GPOs with every setting off, AD and SYSVOL versions that don't match, and a missing default policy | A bad GPO edit can break every PC at once. The backup is how you put it back |
 | `Mfa` | Users with no MFA, admins using only SMS or phone calls | The #1 way accounts get taken over. Cyber insurance asks about it |
 | `AdminRoles` | Who has admin roles, too many Global Admins, guests with admin | More admins means more damage if one gets hacked |
 | `MailForwarding` | Mailboxes and inbox rules sending mail outside the company | The first thing attackers set up after they get in |
@@ -47,10 +48,11 @@ If one check fails (for example a missing permission), the others still run.
 .\Audits\Audit.ps1 -Client "ClientA"                                   # all checks
 .\Audits\Audit.ps1 -Client "ClientA" -Check Licenses, Mfa              # some checks
 .\Audits\Audit.ps1 -Client "ClientA" -Check ADHealth                   # domain controllers only
+.\Audits\Audit.ps1 -Client "ClientA" -Check GroupPolicy                # GPO backup and changes
 .\Audits\Audit.ps1 -Client "ClientA" -Check OffboardingCheck -Path .\leavers.csv
 ```
 
-**Clients with no Microsoft 365** (`"Environment": "OnPrem"` in `Audits.json`): "All" runs only the checks that need just AD (`ADHealth`, `AccessReview`), and it never connects to Microsoft 365. Asking for a cloud check gives a clear error.
+**Clients with no Microsoft 365** (`"Environment": "OnPrem"` in `Audits.json`): "All" runs only the checks that need just AD (`ADHealth`, `GroupPolicy`, `AccessReview`), and it never connects to Microsoft 365. Asking for a cloud check gives a clear error.
 
 ---
 
@@ -59,5 +61,6 @@ If one check fails (for example a missing permission), the others still run.
 * Microsoft Graph doesn't have license prices, so put them in the config (`LicensePrices`, monthly per license).
 * `Mfa` and the checks based on sign-ins need Entra ID P1. `RiskyUsers` needs Entra ID P2.
 * `ExternalSharing` connects to SharePoint, so `SharePointAdminUrl` has to be in the config.
+* `GroupPolicy` needs the GroupPolicy module (RSAT, or run it on a DC) for `Backup-GPO`. Reading GPOs is allowed for any domain user by default.
 * `ADHealth` needs to read AD, and remote WMI access to each DC (it reads services, disks, shares and the clock over CIM). Run it as a domain admin, or give the account *Remote Management Users* and WMI read on the DCs.
 * Permissions (all read-only): Graph `User.Read.All`, `AuditLog.Read.All`, `Directory.Read.All`, `Application.Read.All`, `Organization.Read.All`, `Policy.Read.All`, `Domain.Read.All`, `RoleManagement.Read.Directory`, `IdentityRiskyUser.Read.All`, `Group.Read.All`. Exchange `View-Only Recipients`. Full list in [SECURITY.md](../SECURITY.md).

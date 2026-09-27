@@ -24,6 +24,8 @@ $stubs = @{
     'Get-ADReplicationFailure'  = 'Target'
     'Get-ADReplicationPartnerMetadata'   = 'Target'
     'Get-ADReplicationAttributeMetadata' = 'Object, Server, Properties'
+    'Get-ADObject'              = 'Identity, Filter, LDAPFilter, SearchBase, Properties'
+    'Backup-GPO'                = 'Guid, Name, Path, [switch]$All'
 
     # Microsoft Graph
     'Get-MgUser'                = 'UserId, Property, Filter, [switch]$All'

@@ -5,6 +5,7 @@
     Everything:        .\Audits\Audit.ps1 -Client "ClientA"
     One check:         .\Audits\Audit.ps1 -Client "ClientA" -Check Licenses
     DC health:         .\Audits\Audit.ps1 -Client "ClientA" -Check ADHealth
+    GPO backup:        .\Audits\Audit.ps1 -Client "ClientA" -Check GroupPolicy
     Offboarding check: .\Audits\Audit.ps1 -Client "ClientA" -Check OffboardingCheck -Path .\leavers.csv
 #>
 [CmdletBinding()]
@@ -12,7 +13,7 @@ param(
     [Parameter(Mandatory)]
     [string]$Client,
 
-    [ValidateSet("All", "ADHealth", "Mfa", "AdminRoles", "MailForwarding", "AppCredentials", "ConditionalAccess", "EmailSecurity", "PrivilegedAccess", "RiskyUsers", "Groups", "SharedMailboxes", "ExternalSharing", "Licenses", "AccessReview", "OffboardingCheck")]
+    [ValidateSet("All", "ADHealth", "GroupPolicy", "Mfa", "AdminRoles", "MailForwarding", "AppCredentials", "ConditionalAccess", "EmailSecurity", "PrivilegedAccess", "RiskyUsers", "Groups", "SharedMailboxes", "ExternalSharing", "Licenses", "AccessReview", "OffboardingCheck")]
     [string[]]$Check = "All",
 
     # Leavers CSV (SamAccountName), for OffboardingCheck
@@ -27,13 +28,13 @@ $null = New-Item -ItemType Directory -Path "$PSScriptRoot\Logs" -Force
 $LogFile = "$PSScriptRoot\Logs\Audits.log"
 
 # Checks that only need AD. The rest need Microsoft Graph, Exchange or SharePoint
-$adOnly = @("ADHealth", "AccessReview")
+$adOnly = @("ADHealth", "GroupPolicy", "AccessReview")
 $onPrem = $Config.Environment -eq "OnPrem"
 
 # "All" = every check that doesn't need extra input. A client with no Microsoft 365 only gets the AD ones
 $checks = if ($Check -contains "All") {
     if ($onPrem) { $adOnly }
-    else { @("ADHealth", "Mfa", "AdminRoles", "MailForwarding", "AppCredentials", "ConditionalAccess", "EmailSecurity", "PrivilegedAccess", "RiskyUsers", "Groups", "SharedMailboxes", "ExternalSharing", "Licenses", "AccessReview") + $(if ($Path) { "OffboardingCheck" }) }
+    else { @("ADHealth", "GroupPolicy", "Mfa", "AdminRoles", "MailForwarding", "AppCredentials", "ConditionalAccess", "EmailSecurity", "PrivilegedAccess", "RiskyUsers", "Groups", "SharedMailboxes", "ExternalSharing", "Licenses", "AccessReview") + $(if ($Path) { "OffboardingCheck" }) }
 } else { $Check }
 
 if ("OffboardingCheck" -in $checks -and -not $Path) {
