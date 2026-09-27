@@ -72,10 +72,13 @@ Deletes every member user that isn't in `exclude-users.txt`, so you can test onb
 2. In live mode, ask you to type `YES`
 3. Check you're connected to Microsoft Graph
 4. Get all member users from Entra
-5. For each user not on the list:
+5. Stop if none of the accounts on the list are in this tenant (the list is for a different tenant, so your admin would be deleted too). The account you're signed in with is always kept
+6. For each user not on the list:
    * Synced from AD: delete from AD, and Entra deletes it on the next sync
    * Cloud only: delete from Entra
-6. Print how many were done, skipped, or failed
+7. Print how many were done, skipped, or failed
+
+**New tenant?** Put its admin accounts in `exclude-users.txt` first.
 
 ### Usage
 

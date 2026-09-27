@@ -42,8 +42,11 @@ The **Status** column tells you what's going on:
 
 1. Create the list (one time):
    ```powershell
-   .\Requests\Setup\New-RequestList.ps1 -SiteUrl "https://contoso.sharepoint.com/sites/HR" -Departments Finance,IT,Sales,HR,Marketing
+   .\Requests\Setup\New-RequestList.ps1 -SiteUrl "https://contoso.sharepoint.com/sites/HR" -ClientId <app id> -Departments Finance,IT,Sales,HR,Marketing
    ```
+   PnP needs your own app registration to sign in as you, because Microsoft removed the shared one in 2024.
+   Make one once with `Register-PnPEntraIDAppForInteractiveLogin -ApplicationName "PnP Setup" -Tenant contoso.onmicrosoft.com -Interactive`
+   and use its ID for `-ClientId`.
 2. Permissions: HR gets Contribute, approvers get Edit.
 3. Approval: either an approver changes **Status** to *Approved*, or add a Power Automate flow
    (*When an item is created*, then *Start and wait for an approval*, then set Status to Approved or Rejected).

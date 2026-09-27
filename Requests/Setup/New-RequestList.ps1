@@ -2,12 +2,19 @@
 <#
     One-time setup: creates the "IT Requests" list HR fills in.
 
-    .\Requests\Setup\New-RequestList.ps1 -SiteUrl "https://contoso.sharepoint.com/sites/HR" -Departments Finance,IT,Sales,HR,Marketing
+    .\Requests\Setup\New-RequestList.ps1 -SiteUrl "https://contoso.sharepoint.com/sites/HR" -ClientId <app id> -Departments Finance,IT,Sales,HR,Marketing
+
+    PnP needs your own app registration to sign in as you (Microsoft removed the shared PnP app in 2024).
+    Make one once with: Register-PnPEntraIDAppForInteractiveLogin -ApplicationName "PnP Setup" -Tenant contoso.onmicrosoft.com -Interactive
 #>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
     [string]$SiteUrl,
+
+    # Application (client) ID of the app registration you sign in through
+    [Parameter(Mandatory)]
+    [string]$ClientId,
 
     [string]$ListName = "IT Requests",
 
@@ -18,7 +25,7 @@ param(
                          "HR Specialist", "HR PowerUser", "Sales Rep", "Marketing Specialist", "User")
 )
 
-Connect-PnPOnline -Url $SiteUrl -Interactive
+Connect-PnPOnline -Url $SiteUrl -ClientId $ClientId -Interactive
 
 if (Get-PnPList -Identity $ListName -ErrorAction SilentlyContinue) {
     Write-Host "List '$ListName' already exists, nothing to do." -ForegroundColor Yellow

@@ -8,14 +8,19 @@ function Remove-OffboardingLicense {
         [string]$LogFile
     )
 
-    # Get currently assigned licenses
+    # Get currently assigned licenses, and how each one was given
     $user = Get-MgUser -UserId $Identity.EntraUPN `
-                       -Property "assignedLicenses" `
+                       -Property "assignedLicenses,licenseAssignmentStates" `
                        -ErrorAction Stop
 
-    $skuIds = @($user.AssignedLicenses.SkuId | Where-Object { $_ })
+    # A license that comes from a group can't be removed from the user (Graph refuses the whole call).
+    # It goes away by itself when they leave the group, which offboarding does before this step
+    $states  = @($user.LicenseAssignmentStates | Where-Object { $_.SkuId })
+    $skuIds  = @($states | Where-Object { -not $_.AssignedByGroup } | ForEach-Object SkuId | Select-Object -Unique)
+    $byGroup = @($states | Where-Object { $_.AssignedByGroup } | ForEach-Object SkuId | Select-Object -Unique | Where-Object { $_ -notin $skuIds })
 
     if ($skuIds.Count -eq 0) {
+        if ($byGroup) { return "NoDirectLicenses ($($byGroup.Count) from groups, removed with the group)" }
         return "NoLicenses"
     }
 
