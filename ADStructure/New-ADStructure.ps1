@@ -30,6 +30,10 @@ param(
 
 . "$PSScriptRoot\..\Modules\Shared\Write-Log.ps1"
 
+# Other scripts get this from Get-Config. This one has no config, so set it here,
+# otherwise the .jsonl log lines have no client name.
+$script:LogClient = $Client
+
 if (-Not (Get-Module -ListAvailable -Name "ActiveDirectory")) { throw "Missing module: ActiveDirectory" }
 Import-Module ActiveDirectory
 
@@ -47,7 +51,8 @@ if (-not (Test-Path $Path)) { throw "Structure file not found: $Path" }
 
 $structure = Get-Content $Path -Raw | ConvertFrom-Json
 $domainDn  = (Get-ADDomain).DistinguishedName
-$protect   = [bool]$structure.ProtectFromDeletion
+# On unless the file turns it off. These OUs hold every user in the company.
+$protect   = $structure.ProtectFromDeletion -ne $false
 
 Write-Log -Message "[ADStructure] $Client : using $Path against $domainDn" -Level "INFO" -LogFile $LogFile
 if (-not $Apply) { Write-Host "DRY RUN - nothing will be changed. Add -Apply to build it.`n" -ForegroundColor Yellow }
@@ -63,7 +68,8 @@ function New-StructureOU {
 
     $dn = "OU=$($Node.Name),$ParentDn"
 
-    if (Get-ADOrganizationalUnit -Filter "DistinguishedName -eq '$dn'" -ErrorAction SilentlyContinue) {
+    # AD filters escape a quote by doubling it, so a name like O'Brien doesn't break the query
+    if (Get-ADOrganizationalUnit -Filter "DistinguishedName -eq '$($dn -replace "'", "''")'" -ErrorAction SilentlyContinue) {
         Write-Host "  exists  $dn"
         $script:skipped++
     }
@@ -97,7 +103,7 @@ if ($structure.Groups) {
         $scope     = if ($group.Scope)    { $group.Scope }    else { "Global" }
         $category  = if ($group.Category) { $group.Category } else { "Security" }
 
-        if (Get-ADGroup -Filter "Name -eq '$($group.Name)'" -ErrorAction SilentlyContinue) {
+        if (Get-ADGroup -Filter "Name -eq '$($group.Name -replace "'", "''")'" -ErrorAction SilentlyContinue) {
             Write-Host "  exists  $($group.Name)"
             $skipped++
         }
@@ -130,7 +136,7 @@ if ($structure.Redirect -and -not $SkipRedirect) {
     foreach ($target in $targets | Where-Object { $_.Dn }) {
         $fullDn = "$($target.Dn),$domainDn"
 
-        if (-not (Get-ADOrganizationalUnit -Filter "DistinguishedName -eq '$fullDn'" -ErrorAction SilentlyContinue)) {
+        if (-not (Get-ADOrganizationalUnit -Filter "DistinguishedName -eq '$($fullDn -replace "'", "''")'" -ErrorAction SilentlyContinue)) {
             if ($Apply) {
                 Write-Host "  SKIPPED $($target.Kind): $fullDn doesn't exist" -ForegroundColor Yellow
                 continue
@@ -140,7 +146,14 @@ if ($structure.Redirect -and -not $SkipRedirect) {
         }
 
         if ($Apply) {
-            # redirusr/redircmp ship with AD DS; there is no PowerShell equivalent
+            # redirusr/redircmp come with AD DS, and there's no PowerShell version of them.
+            # Check it's there first: if it isn't, $LASTEXITCODE would still hold whatever the
+            # last program returned, and a missing tool could look like it worked.
+            if (-not (Get-Command $target.Tool -ErrorAction SilentlyContinue)) {
+                Write-Host "  FAILED $($target.Tool): not found. It comes with AD DS, so run this on a domain controller" -ForegroundColor Red
+                Write-Log -Message "[ADStructure] $($target.Tool) FAILED: not found" -Level "ERROR" -LogFile $LogFile
+                continue
+            }
             $output = & $target.Tool $fullDn 2>&1
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "  new $($target.Kind.ToLower()) now land in $fullDn" -ForegroundColor Green

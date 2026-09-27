@@ -159,6 +159,21 @@ Describe "New-OnboardingIdentity" {
             }
         }
 
+        It "finds a manager with an apostrophe in their name" {
+            Mock Get-ADUser { [pscustomobject]@{ DistinguishedName = "CN=Sean O'Brien,OU=IT,DC=corp,DC=local" } } -ModuleName Onboarding
+
+            $obj = New-TestObject
+            $obj.Raw | Add-Member Manager "Sean O'Brien" -Force
+
+            New-OnboardingIdentity -PipelineObject $obj -LogFile $logFile -Config $Config
+
+            # AD needs the quote doubled. The old \' version was a syntax error on a real DC.
+            $obj.Identity.ManagerDN | Should -Be "CN=Sean O'Brien,OU=IT,DC=corp,DC=local"
+            Should -Invoke Get-ADUser -ModuleName Onboarding -Times 1 -Exactly -ParameterFilter {
+                $Filter -eq "SamAccountName -eq 'Sean O''Brien' -or DisplayName -eq 'Sean O''Brien'"
+            }
+        }
+
         It "still creates the account when the manager can't be found" {
             Mock Get-ADUser { } -ModuleName Onboarding
 

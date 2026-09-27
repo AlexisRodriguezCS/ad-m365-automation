@@ -45,7 +45,9 @@ function New-OnboardingIdentity {
         # work on day one, so it's logged as a warning and the account is created without one.
         $managerDn = $null
         if ($raw.Manager) {
-            $search = $raw.Manager -replace "'", "\'"   # names like O'Brien would break the filter
+            # AD filters escape a quote by doubling it. \' does not work: tested on a real DC,
+            # it's a syntax error, so a manager named O'Brien would fail the lookup.
+            $search = $raw.Manager -replace "'", "''"
             $found  = @(Get-ADUser -Filter "SamAccountName -eq '$search' -or DisplayName -eq '$search'" -ErrorAction SilentlyContinue)
 
             if ($found.Count -eq 1) {

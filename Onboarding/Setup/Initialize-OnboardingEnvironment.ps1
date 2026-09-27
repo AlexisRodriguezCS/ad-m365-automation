@@ -29,7 +29,7 @@ if (-Not (Test-Path "$PSScriptRoot\..\Logs")) {
 $ous = @("Finance", "IT", "Sales", "HR", "Marketing")
 
 foreach ($ou in $ous) {
-    $exists = Get-ADOrganizationalUnit -Filter "Name -eq '$ou'" -ErrorAction SilentlyContinue
+    $exists = Get-ADOrganizationalUnit -Filter "Name -eq '$($ou -replace "'", "''")'" -ErrorAction SilentlyContinue
     if ($exists) {
         Write-Log -Message "[SKIP] OU already exists: $ou" -Level "INFO" -LogFile $LogFile
     } else {
@@ -46,7 +46,7 @@ $groups = @("GRP-AllStaff", "GRP_ROLE_IT_Admin", "GRP_ROLE_IT_User", "GRP_ROLE_I
             "GRP_ROLE_HR_PowerUser", "GRP_ROLE_Sales_User", "GRP_ROLE_Marketing_User", "GRP_ROLE_User")
 
 foreach ($group in $groups) {
-    $exists = Get-ADGroup -Filter "Name -eq '$group'" -ErrorAction SilentlyContinue
+    $exists = Get-ADGroup -Filter "Name -eq '$($group -replace "'", "''")'" -ErrorAction SilentlyContinue
     if ($exists) {
         Write-Log -Message "[SKIP] Group already exists: $group" -Level "INFO" -LogFile $LogFile
     } else {

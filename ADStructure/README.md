@@ -100,6 +100,6 @@ Change it by editing the JSON — the tree is read as written, to any depth.
 
 ## Notes
 
-* **`ProtectFromDeletion`** sets accidental-deletion protection on every OU. It's what stops someone dragging a department into oblivion in ADUC. Turn it off for a lab you rebuild often.
+* **`ProtectFromDeletion`** turns on accidental-deletion protection for every OU, so nobody can delete a whole department by mistake in ADUC. **It's on unless you set it to `false`.** Turn it off for a lab you rebuild often.
 * **`redirusr` / `redircmp`** ship with AD DS and have no PowerShell equivalent, so the script calls them directly. They change the domain's own `wellKnownObjects`, visible afterwards as `(Get-ADDomain).UsersContainer`.
 * The OU names here line up with the other scripts: onboarding puts a new hire in `OU=<Department>,<DefaultOU>`, offboarding moves leavers to `DisabledOU`, and only `GRP_ROLE_*` groups are touched on a role change.

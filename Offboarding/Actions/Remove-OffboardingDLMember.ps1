@@ -16,7 +16,8 @@ function Remove-OffboardingDLMember {
     }
 
     # Cloud DLs the user is in. Synced (AD) groups are already handled by RemoveFromGroup.
-    $lists = @(Get-Recipient -Filter "Members -eq '$($mailbox.DistinguishedName)'" `
+    # The DN has the person's name in it (CN=Jane O'Brien,...), so double any quote
+    $lists = @(Get-Recipient -Filter "Members -eq '$($mailbox.DistinguishedName -replace "'", "''")'" `
                              -RecipientTypeDetails MailUniversalDistributionGroup, MailUniversalSecurityGroup `
                              -ResultSize Unlimited -ErrorAction Stop |
                Where-Object { -not $_.IsDirSynced })
