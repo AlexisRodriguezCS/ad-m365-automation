@@ -1,28 +1,28 @@
-## Inactive Accounts Module - Processing Pipeline
+## Inactive Accounts - How It Works
 
 ### Overview
 
-Reviews every enabled account against sign-in activity. Review-only by default.
+Checks every enabled account against when it last signed in. Only reports by default.
 
 ---
 
-## Processing Order
+## Order
 
-### 1. Get Data
+### 1. Get data
 
 **Function:** `Get-InactiveAccountData`
 
-* All enabled users from Graph with `signInActivity`
-* Last sign-in = latest of interactive, non-interactive and successful sign-ins
+* All enabled users from Graph, with `signInActivity`
+* Last sign-in = the newest of interactive, non-interactive and successful sign-ins
 
 ---
 
-### 2. Test
+### 2. Check
 
 **Function:** `Test-InactiveAccount`
 
-* `Excluded`: on the exclusion list
-* `Inactive`: over the threshold for members or guests
+* `Excluded`: on the exclude list
+* `Inactive`: past the limit for employees or guests
 * `Active`: everyone else
 
 ---
@@ -31,47 +31,47 @@ Reviews every enabled account against sign-in activity. Review-only by default.
 
 **Function:** `New-InactiveAccountPlan`
 
-* Members -> `DisableAccount`
-* Guests -> `RemoveGuest`
+* Employees: `DisableAccount`
+* Guests: `RemoveGuest`
 
 ---
 
-### 4. Safety Stop
+### 4. Safety stop
 
 **Function:** `Invoke-InactiveAccountReview`
 
-* If more than `MaxPercentToDisable` of accounts are inactive, nothing runs and everyone is flagged
+* If more than `MaxPercentToDisable` of accounts look inactive, nothing runs and everyone is flagged
 
 ---
 
-### 5. Execute (`-Apply` only)
+### 5. Make the changes (`-Apply` only)
 
 **Function:** `Start-InactiveAccountCleanup`
 
-* Before/after snapshot
-* Synced users disabled in AD (AD is the source), cloud users in Entra
-* Retries via shared `Invoke-Plan`
+* Before and after copy of each account
+* Synced users are disabled in AD (AD is where they live), cloud users in Entra
+* Retries through the shared `Invoke-Plan`
 
 ---
 
 ### 6. Report
 
-* Text report (only inactive accounts) + CSV for Excel
+* Text report (only inactive accounts) and a CSV for Excel
 
 ---
 
-## Summary Flow
+## Summary
 
 ```
 Get: every enabled account + last sign-in
 
-Test: active / inactive / excluded
+Check: active / inactive / excluded
 
-Plan: disable members, remove guests
+Plan: disable employees, remove guests
 
 Safety: stop if too many look inactive
 
-Execute: disable / remove
+Change: disable / remove
 
 Report: who, why, what happened
 ```

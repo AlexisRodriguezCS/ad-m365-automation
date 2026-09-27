@@ -1,12 +1,12 @@
 # AD Structure
 
-Builds a client's Active Directory layout from a JSON file: OUs, groups, and where new users and computers land by default.
+Builds a client's Active Directory setup from a JSON file: the OUs, the groups, and where new users and computers get created.
 
 ---
 
-## Why this exists
+## Why you need it
 
-A brand-new domain gives you almost nothing:
+A new domain comes with almost nothing:
 
 | What you get | Type |
 |---|---|
@@ -15,21 +15,21 @@ A brand-new domain gives you almost nothing:
 | `Computers` | **Container** |
 | `Builtin`, `System`, `ForeignSecurityPrincipals`... | Containers |
 
-**Group Policy can't be linked to a container.** So the two places Windows puts things by default - new accounts in `CN=Users`, new domain-joined PCs in `CN=Computers` - are exactly the places your policies can't reach. Every machine that joins the domain sits outside the baseline until someone moves it.
+**You can't link Group Policy to a container.** Windows puts new accounts in `CN=Users` and new domain-joined PCs in `CN=Computers`, and those are the two places your policies can't reach. So every new PC misses your policies until someone moves it.
 
-This script builds a real OU tree and then points the defaults at it.
+This script builds real OUs, then makes new users and computers go into them.
 
 ---
 
 ## Steps
 
-1. Read the structure file (client's own, or the sample in `Data/`)
-2. Create the OU tree, parents before children, skipping anything that exists
-3. Create the groups, in the OUs the file names
-4. Point new **users** and new **computers** at real OUs (`redirusr` / `redircmp`)
-5. Write a summary and a log
+1. Read the structure file (the client's own, or the sample in `Data/`)
+2. Create the OUs, parents first, and skip any that already exist
+3. Create the groups in the OUs the file says
+4. Make new **users** and new **computers** go into real OUs (`redirusr` / `redircmp`)
+5. Print a summary and write a log
 
-Dry run by default: it prints what it *would* create. Add `-Apply` to build it. Safe to re-run - existing objects are left alone.
+Dry run by default: it only shows what it *would* create. Add `-Apply` to build it. Safe to run again, anything that already exists is left alone.
 
 ---
 
@@ -42,11 +42,11 @@ Dry run by default: it prints what it *would* create. Add `-Apply` to build it. 
 # Build it
 .\ADStructure\New-ADStructure.ps1 -Client "ClientA" -Apply
 
-# Build the OUs but leave the default landing spots alone
+# Build the OUs but don't change where new users and computers go
 .\ADStructure\New-ADStructure.ps1 -Client "ClientA" -Apply -SkipRedirect
 ```
 
-The structure file is `Config\Clients\<Client>\structure.json` if it exists, otherwise [`Data\structure.json`](Data/structure.json). Override with `-Path`.
+It uses `Config\Clients\<Client>\structure.json` if there is one, otherwise [`Data\structure.json`](Data/structure.json). Use `-Path` to pick a different file.
 
 ---
 
@@ -55,12 +55,12 @@ The structure file is `Config\Clients\<Client>\structure.json` if it exists, oth
 ```
 OU=Identity
 +-- OU=Users
-|   +-- OU=Employees        <- new accounts land here (one OU per department)
+|   +-- OU=Employees        <- new accounts go here (one OU per department)
 |   +-- OU=Contractors
 |   +-- OU=ServiceAccounts
-|   \-- OU=Disabled         <- leavers get moved here by offboarding
+|   \-- OU=Disabled         <- offboarding moves leavers here
 +-- OU=Computers
-|   +-- OU=Workstations     <- new domain-joined PCs land here
+|   +-- OU=Workstations     <- new domain-joined PCs go here
 |   +-- OU=Laptops
 |   +-- OU=Kiosks
 |   \-- OU=Disabled         <- retired hardware
@@ -69,12 +69,12 @@ OU=Identity
 |   +-- OU=Database
 |   \-- OU=Infrastructure
 \-- OU=Groups
-    +-- OU=Role             <- GRP_ROLE_* (the only groups the scripts manage)
+    +-- OU=Role             <- GRP_ROLE_* (the only groups the scripts change)
     +-- OU=Security
     \-- OU=Distribution
 ```
 
-Change it by editing the JSON - the tree is read as written, to any depth.
+To change it, edit the JSON. The tree is built exactly as written, as deep as you want.
 
 ```json
 {
@@ -94,12 +94,13 @@ Change it by editing the JSON - the tree is read as written, to any depth.
 }
 ```
 
-`Path` on a group and the `Redirect` values are relative - the domain (`DC=contoso,DC=local`) is added for you, so the same file works for any client.
+A group's `Path` and the `Redirect` values leave out the domain part. The script adds it (`DC=contoso,DC=local`), so the same file works for any client.
 
 ---
 
 ## Notes
 
-* **`ProtectFromDeletion`** turns on accidental-deletion protection for every OU, so nobody can delete a whole department by mistake in ADUC. **It's on unless you set it to `false`.** Turn it off for a lab you rebuild often.
-* **`redirusr` / `redircmp`** ship with AD DS and have no PowerShell equivalent, so the script calls them directly. They change the domain's own `wellKnownObjects`, visible afterwards as `(Get-ADDomain).UsersContainer`.
-* The OU names here line up with the other scripts: onboarding puts a new hire in `OU=<Department>,<DefaultOU>`, offboarding moves leavers to `DisabledOU`, and only `GRP_ROLE_*` groups are touched on a role change.
+* **`ProtectFromDeletion`** turns on delete protection for every OU, so nobody can delete a whole department by mistake in ADUC. **It's on unless you set it to `false`.** Turn it off for a lab you rebuild a lot.
+* **`redirusr` / `redircmp`** come with AD DS and there's no PowerShell version, so the script runs them directly. They change a setting on the domain itself. You can check it after with `(Get-ADDomain).UsersContainer`.
+* The OU names match the other scripts: onboarding puts a new hire in `OU=<Department>,<DefaultOU>`, offboarding moves leavers to `DisabledOU`, and a role change only touches `GRP_ROLE_*` groups.
+* It needs Domain Admin. That's fine, because a person runs it by hand once per client. See [SECURITY.md](../SECURITY.md).

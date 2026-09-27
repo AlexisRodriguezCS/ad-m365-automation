@@ -1,4 +1,4 @@
-## Audits Module - How It Works
+## Audits - How It Works
 
 ### Overview
 
@@ -9,11 +9,11 @@ Every check is a function that returns **findings**. A finding is one row:
 | `Check` | Which audit |
 | `Name` | User, app, role or license |
 | `Detail` | What was found |
-| `Flagged` | `true` = needs attention |
+| `Flagged` | `true` means it needs attention |
 | `Reason` | Why it was flagged, in plain words |
 
-`Export-AuditReport` turns findings into a text summary (flagged first) and a CSV.
-`Invoke-Audit` runs the chosen checks, one at a time, and keeps going if one fails.
+`Export-AuditReport` turns the findings into a text summary (flagged ones first) and a CSV.
+`Invoke-Audit` runs the checks you picked, one at a time, and keeps going if one fails.
 
 ---
 
@@ -21,83 +21,83 @@ Every check is a function that returns **findings**. A finding is one row:
 
 ### Mfa - `Get-MfaAudit`
 
-* Source: Graph authentication registration report
-* Flag: no MFA registered; admin with only SMS/voice/email
+* Reads: the Graph MFA registration report
+* Flags: no MFA set up, or an admin with only SMS, phone call or email
 
 ### AdminRoles - `Get-AdminRoleAudit`
 
-* Source: Graph directory roles + members
-* Flag: more than `MaxGlobalAdmins` (default 4); guest account with a role
+* Reads: Graph directory roles and their members
+* Flags: more than `MaxGlobalAdmins` Global Admins (default 4), or a guest with a role
 
 ### MailForwarding - `Get-MailForwardingAudit`
 
-* Source: Exchange mailboxes + inbox rules
-* Flag: forwarding or inbox rule sending mail to a domain that isn't ours
+* Reads: Exchange mailboxes and inbox rules
+* Flags: forwarding or an inbox rule sending mail to a domain that isn't ours
 
 ### PrivilegedAccess - `Get-PrivilegedAccessAudit`
 
-* Source: Graph role definitions + active and eligible role schedule instances (PIM)
-* Only powerful roles (Global, Privileged Role, Security, Exchange, SharePoint, User, Application, Intune, Hybrid Identity admins...)
-* Flag: standing (`Assigned`, no end date) assignment, except `BreakGlassAccounts`
-* Listed, not flagged: PIM-activated and eligible assignments
+* Reads: Graph role definitions, and active and eligible role assignments (PIM)
+* Only looks at powerful roles (Global, Privileged Role, Security, Exchange, SharePoint, User, Application, Intune, Hybrid Identity admins...)
+* Flags: a permanent assignment (`Assigned` with no end date), except `BreakGlassAccounts`
+* Listed but not flagged: roles turned on through PIM, and PIM-eligible roles
 
 ### RiskyUsers - `Get-RiskyUserAudit`
 
-* Source: Entra ID Protection risky users (needs Entra ID P2)
-* Flag: every user at risk or confirmed compromised, with a next step based on the risk level
+* Reads: Entra ID Protection risky users (needs Entra ID P2)
+* Flags: every user at risk or confirmed hacked, with a next step based on how risky
 
 ### Groups - `Get-GroupHygieneAudit`
 
-* Source: Graph groups (cloud only; synced groups are managed in AD), owners, members
-* Labels each as Team, Microsoft 365 group, distribution list or security group
-* Flag: no owner; no members for more than 30 days
+* Reads: Graph groups (cloud only, since synced groups are managed in AD), their owners and members
+* Labels each one as a Team, Microsoft 365 group, distribution list or security group
+* Flags: no owner, or no members for more than 30 days
 
 ### SharedMailboxes - `Get-SharedMailboxAudit`
 
-* Source: Exchange shared mailboxes, mailbox permissions (FullAccess), recipient permissions (SendAs)
-* Flag: sign-in not blocked on the shared mailbox; access held by a disabled account; nobody has access
+* Reads: Exchange shared mailboxes, who has FullAccess, and who has SendAs
+* Flags: sign-in not blocked on the shared mailbox, a disabled account that still has access, or nobody has access
 
 ### ExternalSharing - `Get-ExternalSharingAudit`
 
-* Source: PnP tenant sites (including OneDrive) and the tenant's external (guest) users, read a page at a time
-* Sites with sharing turned off are skipped; the rest are reported with their sharing level
-* Flag site: `ExternalUserAndGuestSharing` - "anyone with the link" works with no sign-in
-* Flag guest: domain not in `AllowedSharingDomains` (when set); invited more than `ExternalUserMaxAgeDays` days ago (default 365)
-* Needs `Connect-PnPOnline` to the SharePoint admin URL, so `SharePointAdminUrl` must be in the config
+* Reads: all SharePoint sites (OneDrive too) and the tenant's guests, a page at a time
+* Sites with sharing turned off are skipped. The rest are listed with their sharing level
+* Flags a site: `ExternalUserAndGuestSharing`, meaning "anyone with the link" works with no sign-in
+* Flags a guest: domain not in `AllowedSharingDomains` (if you set it), or invited more than `ExternalUserMaxAgeDays` days ago (default 365)
+* Connects to the SharePoint admin site, so `SharePointAdminUrl` has to be in the config
 
 ### EmailSecurity - `Get-EmailSecurityAudit`
 
-* Source: verified domains from Graph (skips `*.onmicrosoft.com`), public DNS
-* Flag SPF: missing, more than one record, `+all`, `?all`
-* Flag DMARC: missing, `p=none` (monitor only)
-* Flag DKIM: no `selector1` / `selector2` CNAME (how Microsoft 365 publishes DKIM keys)
+* Reads: verified domains from Graph (skips `*.onmicrosoft.com`) and public DNS
+* Flags SPF: missing, more than one record, `+all` or `?all`
+* Flags DMARC: missing, or `p=none` (only monitoring)
+* Flags DKIM: no `selector1` / `selector2` CNAME (that's how Microsoft 365 publishes DKIM keys)
 
 ### ConditionalAccess - `Get-ConditionalAccessAudit`
 
-* Source: Graph Conditional Access policies (raw JSON, all pages)
-* Saves `Backups/ConditionalAccess/policies_<date>.json` every run (outside `Reports/`, so the 90-day cleanup keeps them)
-* Compares with the previous backup by policy ID and `modifiedDateTime`
-* Flag: new policy, changed policy (and state change, e.g. enabled -> report-only), deleted policy
-* First run just saves a baseline
+* Reads: every Conditional Access policy from Graph, as raw JSON
+* Saves `Backups/ConditionalAccess/policies_<date>.json` every run. It's outside `Reports/`, so the 90-day cleanup doesn't delete it
+* Compares with the last backup by policy ID and `modifiedDateTime`
+* Flags: a new policy, a changed policy (including turned on or off, like enabled to report-only), or a deleted policy
+* The first run just saves a starting point
 
 ### AppCredentials - `Get-AppCredentialAudit`
 
-* Source: Graph app registrations (secrets + certificates)
-* Flag: expired, or expires within `CredentialWarningDays` (default 30)
+* Reads: Graph app registrations (secrets and certificates)
+* Flags: expired, or expiring within `CredentialWarningDays` (default 30)
 
 ### Licenses - `Get-LicenseAudit`
 
-* Source: Graph subscribed SKUs + users
-* Flag: unused paid licenses; licenses on disabled accounts or accounts idle for `InactiveDays`
-* Extra: monthly cost per department
+* Reads: Graph licenses and users
+* Flags: paid licenses nobody uses, and licenses on disabled accounts or accounts idle for `InactiveDays`
+* Also: monthly cost per department
 
 ### AccessReview - `Get-AccessReview`
 
-* Source: AD users under `DefaultOU` with manager + groups
-* Output: one CSV per manager with a blank `Decision` column (Keep / Remove)
-* Flag: users with no manager
+* Reads: AD users under `DefaultOU`, with their manager and groups
+* Makes: one CSV per manager with an empty `Decision` column (Keep or Remove)
+* Flags: users with no manager
 
 ### OffboardingCheck - `Get-OffboardingCheck`
 
-* Source: HR leavers CSV, AD, Graph
-* Flag: still enabled, still in groups, still licensed
+* Reads: the HR leavers CSV, AD and Graph
+* Flags: still enabled, still in groups, still licensed

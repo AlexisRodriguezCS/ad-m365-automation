@@ -1,47 +1,47 @@
-## Mover Module - Processing Pipeline
+## Mover - How It Works
 
 ### Overview
 
-Handles role changes. Reuses onboarding's policy (who gets what) and compares it to what the user has today.
-Only the difference is changed.
+Handles role changes. It uses the same rules as onboarding (who gets what) and compares that to what the user has today.
+Only the difference gets changed.
 
 ---
 
-## Processing Order
+## Order
 
 ### 1. Request
 
 **Function:** `New-MoverRequest`
 
-* Builds a pipeline object from a CSV row or from parameters
+* Turns a CSV row or the parameters into a pipeline object
 
 ---
 
-### 2. Test
+### 2. Check
 
 **Function:** `Test-MoverData`
 
-* Username, title, department, role required
-* Department must be one of the configured `Departments` (uses the configured spelling)
+* Username, title, department and role are required
+* Department has to be one of the `Departments` in the config (and uses the config's spelling)
 * Sets `Status` to `Valid` or `Invalid`
 
 ---
 
-### 3. Lookup Identity
+### 3. Find the user
 
 **Function:** `Get-MoverIdentity`
 
 * Finds the user and the new manager in AD
-* Stores current title, department, manager and groups
+* Saves their current title, department, manager and groups
 * Sets `Status` to `NotFound` if the user doesn't exist
 
 ---
 
-### 4. Policy
+### 4. Rules
 
 **Function:** `Set-OnboardingPolicy` (from onboarding)
 
-* Same rules as a new hire in that role: groups, distribution lists
+* Same rules as a new hire in that role: groups and email lists
 
 ---
 
@@ -49,26 +49,26 @@ Only the difference is changed.
 
 **Function:** `New-MoverPlan`
 
-* Compares new vs current and plans only the changes:
+* Compares new vs current and only plans the changes:
 
-  * `SetAttribute` (one per changed value)
+  * `SetAttribute` (one for each value that changed)
   * `AddToGroup`
   * `RemoveFromGroup`
   * `MoveToDepartmentOU`
-  * `SwitchLicense` (only when `RoleLicenseSkuIds` maps the new role to a SKU)
+  * `SwitchLicense` (only when `RoleLicenseSkuIds` has a license for the new role)
   * `SyncDistributionLists`
 
-New access is added before old access is removed, and the OU move comes after group changes.
+New access is added before old access is removed, and the OU move happens after the group changes.
 
-**Licenses** follow the same rule as role groups: only SKUs listed in `RoleLicenseSkuIds` are managed, so a Visio or Project license bought separately is never removed. `Switch-MoverLicense` adds the new SKU and removes the old one **in a single `Set-MgUserLicense` call** - a gap with no license can start Microsoft 365's 30-day mailbox deletion timer. A usage location is set first if the account doesn't have one, because a license can't be assigned without it.
+**Licenses** follow the same rule as role groups. Only licenses listed in `RoleLicenseSkuIds` are managed, so a Visio or Project license bought separately is never removed. `Switch-MoverLicense` adds the new license and removes the old one **in one `Set-MgUserLicense` call**. If there's a moment with no license at all, Microsoft 365 can start its 30-day timer to delete the mailbox. If the account has no usage location, it sets one first, because a license can't be given without it.
 
 ---
 
-### 6. Execute (`-Apply` only)
+### 6. Make the changes (`-Apply` only)
 
 **Function:** `Start-Mover`
 
-* Before/after snapshot
+* Before and after copy of the account
 * Runs the plan with retries (shared `Invoke-Plan`)
 * Sets `Status` to `Moved` or `Failed`
 
@@ -80,20 +80,20 @@ New access is added before old access is removed, and the OU move comes after gr
 
 ---
 
-## Summary Flow
+## Summary
 
 ```
-Request: one person or CSV
+Request: one person or a CSV
 
-Test: validate the new role
+Check: is the new role valid
 
-Lookup: current state in AD
+Find: what they have in AD today
 
-Policy: what the new role should have
+Rules: what the new role should have
 
-Plan: difference between new and current
+Plan: the difference between new and current
 
-Execute: attributes, add groups, remove groups, move OU, swap DLs
+Change: attributes, add groups, remove groups, move OU, swap email lists
 
-Report: log results, pass/fail
+Report: what happened, pass or fail
 ```

@@ -1,33 +1,33 @@
-## Password Expiry Module - Processing Pipeline
+## Password Expiry - How It Works
 
 ### Overview
 
-Daily reminder emails with a sent-log so each reminder goes out exactly once.
+Sends reminder emails every day, and keeps a list of what was sent so each reminder only goes out once.
 
 ---
 
-## Processing Order
+## Order
 
-### 1. Get Data
+### 1. Get the data
 
 **Function:** `Get-PasswordExpiryData`
 
-* Enabled AD users, password can expire
-* Expiry from `msDS-UserPasswordExpiryTimeComputed`
+* Enabled AD users whose password can expire
+* The expiry date comes from `msDS-UserPasswordExpiryTimeComputed`
 
 ---
 
-### 2. Test
+### 2. Check
 
 **Function:** `Test-PasswordExpiry`
 
 * `Expired`: already past
-* `NotDue`: outside every reminder window
-* `Invalid`: due but no email address
-* `AlreadySent`: this reminder is in the sent-log
+* `NotDue`: not close enough for any reminder
+* `Invalid`: needs a reminder but has no email address
+* `AlreadySent`: this reminder is already on the sent list
 * `Due`: send it
 
-The window is picked by "days left <= window", not "days left = window", so a missed run catches up.
+It picks the reminder with "days left is at or under the reminder day", not "days left is exactly the reminder day". So if a run gets missed, the next one catches up.
 
 ---
 
@@ -39,12 +39,12 @@ The window is picked by "days left <= window", not "days left = window", so a mi
 
 ---
 
-### 4. Execute (`-Apply` only)
+### 4. Send (`-Apply` only)
 
 **Function:** `Start-PasswordExpiryReminder`
 
-* Sends via Graph with retries (shared `Invoke-Plan`)
-* Records `user | expiry date | window` in the sent-log
+* Sends through Graph with retries (shared `Invoke-Plan`)
+* Saves `user | expiry date | reminder` to the sent list
 
 ---
 
@@ -54,16 +54,16 @@ The window is picked by "days left <= window", not "days left = window", so a mi
 
 ---
 
-## Summary Flow
+## Summary
 
 ```
 Get: users + expiry date
 
-Test: which reminder, already sent?
+Check: which reminder, already sent?
 
-Plan: send reminder
+Plan: send the reminder
 
-Execute: send, remember
+Send: send it, remember it
 
 Report: sent / skipped / flagged
 ```

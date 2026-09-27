@@ -1,8 +1,8 @@
 # Mailbox Size Warnings
 
-Emails people before their mailbox fills up. A full mailbox stops sending (and then receiving) mail, which always turns into an urgent ticket.
+Emails people before their mailbox fills up. A full mailbox stops sending mail (and then stops receiving it), and that always turns into an urgent ticket.
 
-Pipeline details: [Docs/MailboxQuota.md](Docs/MailboxQuota.md)
+How it works inside: [Docs/MailboxQuota.md](Docs/MailboxQuota.md)
 
 ---
 
@@ -10,13 +10,13 @@ Pipeline details: [Docs/MailboxQuota.md](Docs/MailboxQuota.md)
 
 1. Get every user mailbox and its size limit (mailboxes with no limit are skipped)
 2. Get how much each one is using
-3. Pick the highest warning level reached: 80%, 90% or 95% (configurable `WarnAtPercent`)
-4. Skip if that warning was already sent this month (no daily spam, safe to run as often as you like)
+3. Pick the highest warning level it reached: 80%, 90% or 95% (you can change these in `WarnAtPercent`)
+4. Skip it if that warning was already sent this month (no daily spam, safe to run as often as you want)
 5. Email the user from the IT mailbox
 6. Remember what was sent
 7. Write a report to `Reports/` (only mailboxes over a level)
 
-Steps 5-6 only run with `-Apply`. Run it once a day on a schedule.
+Steps 5-6 only run with `-Apply`. Schedule it once a day.
 
 ---
 
@@ -48,4 +48,4 @@ Send:
 }
 ```
 
-Exchange: *View-Only Recipients*. Graph: `Mail.Send` (limit it to the sender mailbox with an application access policy).
+Permissions: Exchange *View-Only Recipients*. Graph `Mail.Send` (limit it to the sender mailbox with an application access policy).

@@ -1,30 +1,30 @@
-## Stale Devices Module - Processing Pipeline
+## Stale Devices - How It Works
 
 ### Overview
 
-Cleans up Intune devices that stopped checking in: retire first, delete the record once the device is clearly gone. Read-only until `-Apply`.
+Cleans up Intune devices that stopped checking in. Retire first, then delete the record once the device is clearly gone. Only reports until you add `-Apply`.
 
 ---
 
-## Processing Order
+## Order
 
-### 1. Collect
+### 1. Get the data
 
 **Function:** `Get-DeviceData`
 
-* Every Intune managed device from Graph, with `lastSyncDateTime`, owner, OS, serial, compliance and `managementState`
-* One pipeline object per device (same shape as the people scripts, so the shared report and retry engine work unchanged)
+* Every Intune device from Graph, with `lastSyncDateTime`, owner, OS, serial, compliance and `managementState`
+* One pipeline object per device (same shape as the people scripts, so the shared report and retry engine work as-is)
 
 ---
 
-### 2. Test
+### 2. Check
 
 **Function:** `Test-StaleDevice`
 
-* Devices named in `ExcludeDevices` -> `Excluded` (kiosks, conference room PCs, spares in a drawer)
-* No check-in for `RetireAfterDays` (default 90) -> `Stale`
-* Never checked in at all -> `Stale`, counted as the oldest possible
-* Anything else -> `Active`
+* Devices listed in `ExcludeDevices`: `Excluded` (kiosks, conference room PCs, spares in a drawer)
+* No check-in for `RetireAfterDays` (default 90): `Stale`
+* Never checked in at all: `Stale`, and treated as the oldest possible
+* Everything else: `Active`
 
 ---
 
@@ -32,9 +32,9 @@ Cleans up Intune devices that stopped checking in: retire first, delete the reco
 
 **Function:** `New-StaleDevicePlan`
 
-* `DaysSinceSync >= DeleteAfterDays` (default 180) -> **DeleteRecord**: the device is gone, remove the Intune record
-* Otherwise -> **Retire**: company data, apps and mail profiles are removed the next time it checks in; personal data is untouched
-* A device already showing `retirePending` isn't sent a second retire (idempotent)
+* `DaysSinceSync` at or over `DeleteAfterDays` (default 180): **DeleteRecord**. The device is gone, so remove it from Intune
+* Otherwise: **Retire**. Company data, apps and email are removed the next time it checks in. Personal data is left alone
+* A device that already shows `retirePending` doesn't get a second retire
 
 ---
 
@@ -43,25 +43,25 @@ Cleans up Intune devices that stopped checking in: retire first, delete the reco
 **Function:** `Invoke-StaleDeviceCleanup`
 
 * If more than `MaxPercentToChange` (default 20%) of all devices would change, nothing runs
-* A number that high nearly always means sync data is wrong, not that every laptop vanished
-* The devices are still reported, marked `Failed`, with the reason
+* A number that high almost always means the sync data is wrong, not that every laptop disappeared
+* The devices still show up in the report, marked `Failed`, with the reason
 
 ---
 
-### 5. Execute
+### 5. Make the changes
 
 **Actions:** `Invoke-DeviceRetire`, `Remove-DeviceRecord`
 
-* Run through the shared `Invoke-Plan` retry engine (3 attempts, growing backoff)
-* Status ends as `Retired`, `Deleted` or `Failed`
+* Run through the shared `Invoke-Plan` retry engine (3 tries, waiting longer each time)
+* Ends as `Retired`, `Deleted` or `Failed`
 
 ---
 
 ### 6. Report
 
-* `Reports/StaleDevicesReport_<date>.txt` - problems first
-* `Reports/StaleDevices_<date>.csv` - full list for Excel
-* Alert if anything failed, and a second alert on a review-only run when there is something to approve
+* `Reports/StaleDevicesReport_<date>.txt`, problems at the top
+* `Reports/StaleDevices_<date>.csv`, the full list for Excel
+* An alert if anything failed, and another on a review-only run when there's something to approve
 
 ---
 
@@ -69,13 +69,13 @@ Cleans up Intune devices that stopped checking in: retire first, delete the reco
 
 | Key | Default | Meaning |
 |---|---|---|
-| `RetireAfterDays` | 90 | No check-in for this long -> retire |
-| `DeleteAfterDays` | 180 | No check-in for this long -> delete the record |
+| `RetireAfterDays` | 90 | No check-in for this long: retire |
+| `DeleteAfterDays` | 180 | No check-in for this long: delete the record |
 | `MaxPercentToChange` | 20 | Safety stop |
-| `ExcludeDevices` | - | Device names never touched |
+| `ExcludeDevices` | - | Device names that are never touched |
 
 ---
 
 ## Permissions
 
-Graph application permissions: `DeviceManagementManagedDevices.ReadWrite.All`.
+Graph application permissions: `DeviceManagementManagedDevices.ReadWrite.All` and `DeviceManagementManagedDevices.PrivilegedOperations.All` (to retire).
