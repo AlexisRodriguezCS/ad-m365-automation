@@ -25,5 +25,6 @@
 . $PSScriptRoot\Functions\Get-LicenseAudit.ps1
 . $PSScriptRoot\Functions\Get-AccessReview.ps1
 . $PSScriptRoot\Functions\Get-OffboardingCheck.ps1
+. $PSScriptRoot\Functions\Get-ADHealthAudit.ps1
 
 Export-ModuleMember -Function *

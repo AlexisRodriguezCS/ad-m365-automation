@@ -129,7 +129,9 @@ $onboarding = [ordered]@{
     Departments             = $departments
     Company                 = "Lab Co"
     MaxConsecutiveFailures  = 5
-    # Cloud settings are filled in when the Microsoft 365 dev tenant exists
+    # No Microsoft 365 yet, so every cloud step is skipped. Remove this and fill in the
+    # cloud settings below once a tenant is connected
+    Environment             = "OnPrem"
     TenantDomain            = ""
     TenantId                = ""
     ClientId                = ""
@@ -142,6 +144,7 @@ $offboarding = [ordered]@{
     AutoReplyMessage       = "{Name} is no longer with the company. Please contact {Contact}."
     MaxConsecutiveFailures = 5
     ProtectedAccounts      = @("Administrator", "krbtgt")
+    Environment            = "OnPrem"
     TenantDomain           = ""
     TenantId               = ""
     ClientId               = ""
@@ -149,8 +152,15 @@ $offboarding = [ordered]@{
     SharePointAdminUrl     = ""
 }
 
+# With Environment OnPrem, "All" runs only the checks that need just AD
+$audits = [ordered]@{
+    Environment = "OnPrem"
+    DefaultOU   = $employeeOu
+}
+
 $onboarding  | ConvertTo-Json -Depth 5 | Out-File (Join-Path $configDir "Onboarding.json")  -Encoding utf8
 $offboarding | ConvertTo-Json -Depth 5 | Out-File (Join-Path $configDir "Offboarding.json") -Encoding utf8
+$audits      | ConvertTo-Json -Depth 5 | Out-File (Join-Path $configDir "Audits.json")      -Encoding utf8
 
 Write-Host @"
 

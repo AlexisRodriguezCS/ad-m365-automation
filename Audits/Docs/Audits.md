@@ -19,6 +19,22 @@ Every check is a function that returns **findings**. A finding is one row:
 
 ## Checks
 
+### ADHealth - `Get-ADHealthAudit`
+
+* Reads: AD (domain, forest, DCs, replication), and each DC over CIM (services, disks, shares, clock)
+* Flags:
+  * Only one domain controller (if it dies, nobody signs in until it's restored)
+  * A FSMO role held by a server that isn't a DC any more (it has to be seized)
+  * AD never backed up, or not in `MaxBackupAgeDays` (default 7). It reads the `dSASignature` backup marker, same as `repadmin /showbackup`. Version 1 means never backed up, because that's what AD writes when the domain is created
+  * Any of NTDS, DNS, Netlogon, Kdc, W32Time, DFSR or ADWS not running
+  * A disk under `MinFreeDiskPercent` free (default 15)
+  * SYSVOL or NETLOGON not shared (Group Policy won't apply from that DC)
+  * A DC clock more than `MaxTimeSkewSeconds` off (default 60. Kerberos breaks at 5 minutes)
+  * Replication failing, or no replication from a partner in `MaxReplicationHours` (default 24)
+  * The PDC using its own clock or the Hyper-V host for time instead of an outside time server
+* A DC it can't reach is one flagged row, and the rest of the DCs are still checked
+* Only needs AD, so it runs for clients with no Microsoft 365
+
 ### Mfa - `Get-MfaAudit`
 
 * Reads: the Graph MFA registration report

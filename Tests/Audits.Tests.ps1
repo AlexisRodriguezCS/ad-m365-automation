@@ -331,4 +331,111 @@ Describe "Audits" {
             Get-Content $summary.ReportFile | Should -Contain "=== NEEDS ATTENTION (1) ==="
         }
     }
+
+    Context "ADHealth" {
+
+        BeforeEach {
+            # A healthy two-DC domain. Each test breaks one thing
+            Mock Get-ADDomain {
+                [pscustomobject]@{ DNSRoot = "corp.local"; DistinguishedName = "DC=corp,DC=local"
+                                   PDCEmulator = "DC1.corp.local"; RIDMaster = "DC1.corp.local"; InfrastructureMaster = "DC1.corp.local" }
+            } -ModuleName Audits
+            Mock Get-ADForest { [pscustomobject]@{ SchemaMaster = "DC1.corp.local"; DomainNamingMaster = "DC1.corp.local" } } -ModuleName Audits
+            Mock Get-ADDomainController { [pscustomobject]@{ HostName = "DC1.corp.local" }; [pscustomobject]@{ HostName = "DC2.corp.local" } } -ModuleName Audits
+            Mock Get-ADReplicationAttributeMetadata { [pscustomobject]@{ Version = 5; LastOriginatingChangeTime = $now.AddDays(-1) } } -ModuleName Audits
+            Mock Get-ADReplicationFailure {} -ModuleName Audits
+            Mock Get-ADReplicationPartnerMetadata { [pscustomobject]@{ Partner = "DC2"; LastReplicationSuccess = $now.AddHours(-1) } } -ModuleName Audits
+            Mock New-CimSession { [pscustomobject]@{ ComputerName = "dc" } } -ModuleName Audits
+            Mock Remove-CimSession {} -ModuleName Audits
+            Mock Get-CimInstance {
+                "NTDS", "DNS", "Netlogon", "Kdc", "W32Time", "DFSR", "ADWS" | ForEach-Object { [pscustomobject]@{ Name = $_; State = "Running" } }
+            } -ModuleName Audits -ParameterFilter { $ClassName -eq "Win32_Service" }
+            Mock Get-CimInstance { [pscustomobject]@{ DeviceID = "C:"; Size = 100GB; FreeSpace = 50GB } } -ModuleName Audits -ParameterFilter { $ClassName -eq "Win32_LogicalDisk" }
+            Mock Get-CimInstance { [pscustomobject]@{ Name = "SYSVOL" }; [pscustomobject]@{ Name = "NETLOGON" } } -ModuleName Audits -ParameterFilter { $ClassName -eq "Win32_Share" }
+            Mock Get-CimInstance { [pscustomobject]@{ LocalDateTime = Get-Date } } -ModuleName Audits -ParameterFilter { $ClassName -eq "Win32_OperatingSystem" }
+            Mock w32tm { "time.windows.com,0x9" } -ModuleName Audits
+        }
+
+        It "doesn't flag a healthy domain" {
+            $findings = @(Get-ADHealthAudit -Config ([pscustomobject]@{}) -Now $now)
+
+            $findings.Count | Should -BeGreaterThan 10
+            @($findings | Where-Object Flagged).Count | Should -Be 0
+        }
+
+        It "flags one DC, a domain that was never backed up, and a PDC on its own clock" {
+            Mock Get-ADDomainController { [pscustomobject]@{ HostName = "DC1.corp.local" } } -ModuleName Audits
+            Mock Get-ADReplicationAttributeMetadata { [pscustomobject]@{ Version = 1; LastOriginatingChangeTime = $now.AddDays(-2) } } -ModuleName Audits
+            Mock w32tm { "Local CMOS Clock" } -ModuleName Audits
+
+            $findings = @(Get-ADHealthAudit -Config ([pscustomobject]@{}) -Now $now)
+
+            ($findings | Where-Object Name -eq "corp.local").Reason  | Should -Match "Only one domain controller"
+            # Version 1 is what AD writes when the domain is created, so a recent date doesn't mean a backup ran
+            ($findings | Where-Object Name -eq "AD backup").Detail   | Should -Be "Never backed up"
+            ($findings | Where-Object Name -eq "Time source").Reason | Should -Match "its own clock"
+        }
+
+        It "flags an old backup and a PDC taking time from the Hyper-V host" {
+            Mock Get-ADReplicationAttributeMetadata { [pscustomobject]@{ Version = 9; LastOriginatingChangeTime = $now.AddDays(-30) } } -ModuleName Audits
+            Mock w32tm { "VM IC Time Synchronization Provider" } -ModuleName Audits
+
+            $findings = @(Get-ADHealthAudit -Config ([pscustomobject]@{}) -Now $now)
+
+            ($findings | Where-Object Name -eq "AD backup").Reason   | Should -Match "last 7 days"
+            ($findings | Where-Object Name -eq "Time source").Reason | Should -Match "Hyper-V host"
+        }
+
+        It "flags stopped services, a nearly full disk and a missing SYSVOL" {
+            Mock Get-CimInstance {
+                [pscustomobject]@{ Name = "NTDS"; State = "Running" }; [pscustomobject]@{ Name = "DNS"; State = "Stopped" }
+            } -ModuleName Audits -ParameterFilter { $ClassName -eq "Win32_Service" }
+            Mock Get-CimInstance { [pscustomobject]@{ DeviceID = "C:"; Size = 100GB; FreeSpace = 5GB } } -ModuleName Audits -ParameterFilter { $ClassName -eq "Win32_LogicalDisk" }
+            Mock Get-CimInstance { [pscustomobject]@{ Name = "NETLOGON" } } -ModuleName Audits -ParameterFilter { $ClassName -eq "Win32_Share" }
+
+            $findings = @(Get-ADHealthAudit -Config ([pscustomobject]@{}) -Now $now | Where-Object Name -eq "DC1.corp.local")
+
+            ($findings | Where-Object Detail -like "Services*").Reason | Should -Match "DNS \(Stopped\)"
+            ($findings | Where-Object Detail -like "Services*").Reason | Should -Match "DFSR \(not installed\)"
+            ($findings | Where-Object Detail -like "Disk C:*").Flagged  | Should -BeTrue
+            ($findings | Where-Object Detail -like "Shares*").Reason    | Should -Match "Missing SYSVOL"
+        }
+
+        It "flags a FSMO role held by a server that isn't a DC any more" {
+            Mock Get-ADForest { [pscustomobject]@{ SchemaMaster = "OLD-DC.corp.local"; DomainNamingMaster = "DC1.corp.local" } } -ModuleName Audits
+
+            $findings = @(Get-ADHealthAudit -Config ([pscustomobject]@{}) -Now $now)
+
+            ($findings | Where-Object Name -eq "Schema Master").Reason | Should -Match "seized"
+        }
+
+        It "flags replication that's failing or hasn't happened in a day" {
+            Mock Get-ADReplicationFailure {
+                [pscustomobject]@{ Partner = "DC2"; FailureCount = 12; FirstFailureTime = $now.AddDays(-2); LastError = 1722 }
+            } -ModuleName Audits -ParameterFilter { $Target -eq "DC1.corp.local" }
+            Mock Get-ADReplicationPartnerMetadata { [pscustomobject]@{ Partner = "DC1"; LastReplicationSuccess = $now.AddHours(-30) } } -ModuleName Audits
+
+            $findings = @(Get-ADHealthAudit -Config ([pscustomobject]@{}) -Now $now)
+
+            @($findings | Where-Object { $_.Detail -like "Replication from DC2 failing*" -and $_.Flagged }).Count | Should -Be 1
+            @($findings | Where-Object { $_.Detail -like "Last replicated*30 hours ago" -and $_.Flagged }).Count | Should -Be 2
+        }
+
+        It "reports a DC it can't reach and still checks the rest" {
+            Mock New-CimSession { throw "WinRM cannot complete the operation" } -ModuleName Audits -ParameterFilter { $ComputerName -eq "DC2.corp.local" }
+
+            $findings = @(Get-ADHealthAudit -Config ([pscustomobject]@{}) -Now $now)
+
+            ($findings | Where-Object { $_.Name -eq "DC2.corp.local" -and $_.Detail -eq "Not reachable" }).Flagged | Should -BeTrue
+            ($findings | Where-Object { $_.Name -eq "DC1.corp.local" -and $_.Detail -like "Services*" }).Flagged   | Should -BeFalse
+        }
+
+        It "says so when it can't read the time source, instead of passing" {
+            Mock w32tm { "The following error occurred: Access is denied. (0x80070005)" } -ModuleName Audits
+
+            $findings = @(Get-ADHealthAudit -Config ([pscustomobject]@{}) -Now $now)
+
+            ($findings | Where-Object Name -eq "Time source").Reason | Should -Match "Couldn't read"
+        }
+    }
 }
