@@ -85,6 +85,11 @@ Describe "Security guard rails" {
             Resolve-EntraUpn -SamAccountName "jdoe" -AdUpn "jdoe@contoso.local" -Config ([pscustomobject]@{ TenantDomain = "contoso.onmicrosoft.com" }) |
                 Should -Be "jdoe@contoso.onmicrosoft.com"
         }
+
+        It "has none for a client with no Microsoft 365" {
+            Resolve-EntraUpn -SamAccountName "jdoe" -AdUpn "jdoe@contoso.local" -Config ([pscustomobject]@{ Environment = "OnPrem" }) |
+                Should -BeNullOrEmpty
+        }
     }
 
     Context "Request approval" {

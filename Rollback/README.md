@@ -37,6 +37,12 @@ Restore:
 .\Rollback\Restore-FromSnapshot.ps1 -SnapshotFile .\Reports\Snapshots\Offboarding_20260919_101500\jdoe_before.json -Apply
 ```
 
+See what changed, as one easy to read web page (for a ticket, or to check before you undo anything):
+```powershell
+.\Rollback\New-ChangeReport.ps1 -Path .\Reports\Snapshots\Offboarding_20260919_101500
+```
+It shows each person's before and after side by side, with the changed rows in yellow, and only the groups that were taken away or added. It only reads the JSON files. Give it more than one folder to see several runs on one page, in time order.
+
 Before copies are kept for 90 days (see [SECURITY.md](../SECURITY.md)). A user that was deleted from AD can't be restored this way. Use the AD Recycle Bin for that.
 
 **No alerts.** The scheduled scripts send alerts because nobody is watching them. This one is run by hand, so the result is on screen and in `Reports/RestoreReport_*.txt`. Anything it couldn't do (licenses, mailbox type) is listed under **DO BY HAND**.

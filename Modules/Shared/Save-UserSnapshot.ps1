@@ -27,9 +27,20 @@ function Save-UserSnapshot {
     }
 
     try {
-        $adUser = Get-ADUser -Filter "SamAccountName -eq '$sam'" `
-                             -Properties Enabled, DisplayName, Title, Department, Manager, Description, MemberOf, DistinguishedName `
-                             -ErrorAction Stop
+        # After a name change the account has its new username, so look for that first. If the
+        # rename failed it still has the old one
+        $names  = @($(if ($Stage -eq "After") { $identity.NewSamAccountName }), $sam) | Where-Object { $_ } | Select-Object -Unique
+        $adUser = $null
+        foreach ($name in $names) {
+            $adUser = Get-ADUser -Filter "SamAccountName -eq '$name'" `
+                                 -Properties Enabled, DisplayName, Title, Department, Manager, Description, MemberOf, DistinguishedName `
+                                 -ErrorAction Stop
+            if ($adUser) {
+                $sam = $name
+                $snapshot.SamAccountName = $name
+                break
+            }
+        }
         if ($adUser) {
             $snapshot.AD = [ordered]@{
                 Enabled           = $adUser.Enabled

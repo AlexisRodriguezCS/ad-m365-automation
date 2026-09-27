@@ -56,9 +56,11 @@ MoverReport_*.txt
 NameChangeReport_*.txt
 OffboardingReport_*.txt
 RestoreReport_*.txt
+changes.html                  what changed at each step, as one easy to read page
 Snapshots\
-    jordanbrooks_before.json  the account before offboarding
-    jordanbrooks_after.json   and after
+    Mover_<date>\             the account before and after each step, as JSON
+    NameChange_<date>\
+    Offboarding_<date>\
 ```
 
 Good for screenshots, and for showing someone what a run leaves behind.
