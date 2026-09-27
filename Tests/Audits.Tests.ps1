@@ -345,7 +345,8 @@ Describe "Audits" {
             Mock Get-ADReplicationAttributeMetadata { [pscustomobject]@{ Version = 5; LastOriginatingChangeTime = $now.AddDays(-1) } } -ModuleName Audits
             Mock Get-ADReplicationFailure {} -ModuleName Audits
             Mock Get-ADReplicationPartnerMetadata { [pscustomobject]@{ Partner = "DC2"; LastReplicationSuccess = $now.AddHours(-1) } } -ModuleName Audits
-            Mock New-CimSession { [pscustomobject]@{ ComputerName = "dc" } } -ModuleName Audits
+            # The CIM commands only accept a real CimSession, so hand back a local one. It never connects anywhere
+            Mock New-CimSession { [Microsoft.Management.Infrastructure.CimSession]::Create($null) } -ModuleName Audits
             Mock Remove-CimSession {} -ModuleName Audits
             Mock Get-CimInstance {
                 "NTDS", "DNS", "Netlogon", "Kdc", "W32Time", "DFSR", "ADWS" | ForEach-Object { [pscustomobject]@{ Name = $_; State = "Running" } }
