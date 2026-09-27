@@ -1,24 +1,72 @@
-# Scripts
+# Identity Lifecycle Automation
 
 [![PowerShell CI](https://github.com/AlexisRodriguezCS/scripts/actions/workflows/ci.yml/badge.svg)](https://github.com/AlexisRodriguezCS/scripts/actions/workflows/ci.yml)
 
-PowerShell automation for the whole employee lifecycle in Active Directory and Microsoft 365:
-new hires, role changes, leavers, plus the security, cost and compliance checks a business runs every week.
+PowerShell scripts for the account work IT does every week: new hires, role changes, name changes
+and people leaving. They work with Active Directory and Microsoft 365. There are also checks for
+security, licenses and cleanup that usually get done by hand, or get skipped.
 
-HR requests changes through a SharePoint list. IT can run any script directly. Nothing changes without `-Apply`.
+Every script works the same way:
 
-Built for a **hybrid** environment: users live in on-prem Active Directory and sync to Entra ID with Entra Connect; licenses, mailboxes and OneDrive are in Microsoft 365.
+- **Nothing changes unless you add `-Apply`.** Without it, the script only shows what it would do.
+- **It saves a copy of the account before changing it**, so a mistake can be undone.
+- **If something fails, the report says who and why**, at the top.
+
+HR can request changes through a SharePoint list, or IT can run any script by hand.
+
+It's built for a **hybrid** setup: users are created in Active Directory, then Entra Connect copies
+them to Microsoft 365, where their license, mailbox and OneDrive live. For a client with no
+Microsoft 365, set `"Environment": "OnPrem"` and the scripts skip the cloud steps.
 
 ```
-On-prem AD ──(Entra Connect sync)──► Entra ID ──► Exchange Online / OneDrive / Licenses
+On-prem AD --(Entra Connect sync)--> Entra ID --> Exchange Online / OneDrive / Licenses
   accounts, groups, OUs                                 mailboxes, DLs, files
 ```
 
 ---
 
+## See it run
+
+The demo takes one made-up employee through everything: hired, promoted, name change after getting
+married, leaving the company, and then undoing the offboarding. It runs on a real Windows Server 2025
+domain controller built for this project.
+
+```powershell
+.\Demo\Invoke-Demo.ps1 -Client Lab -Apply
+```
+
+After each step it reads the account back from Active Directory and prints it, so the output shows
+what is really in AD, not what the script thinks it did:
+
+```
+ 3. NAME CHANGE
+      Name     : Jordan Brooks   (jordanbrooks)
+      Job      : Support Technician, IT
+      Enabled  : True
+      Where    : OU=IT,OU=Employees,OU=Users,OU=Identity
+      Access   : GRP_ROLE_IT_Helpdesk, GRP-AllStaff
+
+ 4. LEAVING
+      Name     : Jordan Brooks   (jordanbrooks)
+      Enabled  : False
+      Where    : OU=Disabled,OU=Users,OU=Identity
+      Access   : none
+```
+
+<!-- Screenshots to add. Put the files in docs/images/ and remove these comment lines:
+![A full demo run](docs/images/demo-run.png)
+![The OU structure in Active Directory Users and Computers](docs/images/aduc-ous.png)
+-->
+
+Each run saves a folder with all the reports, a copy of the account before and after, and everything
+that was printed. See [Demo](Demo/README.md). The domain itself is built by [Lab](Lab/README.md) and
+[AD Structure](ADStructure/README.md), so the whole setup can be rebuilt from scratch.
+
+---
+
 ## Scripts
 
-**People (Joiner – Mover – Leaver)**
+**People (Joiner, Mover, Leaver)**
 
 | Script | What it does | One person or CSV |
 |--------|--------------|:---:|
@@ -44,7 +92,7 @@ On-prem AD ──(Entra Connect sync)──► Entra ID ──► Exchange Onlin
 | Script | What it does |
 |--------|--------------|
 | [AD Structure](ADStructure/README.md) | Builds a new client's OU tree and groups from a JSON file, and points new users and computers at real OUs so Group Policy can reach them |
-| [Demo](Demo/README.md) | Runs one employee's whole story against the lab — hired, promoted, name change, leaver, undo — and collects every report and snapshot in one folder |
+| [Demo](Demo/README.md) | Runs one employee's whole story against the lab (hired, promoted, name change, leaver, undo) and collects every report and snapshot in one folder |
 | [Compromised Account Response](IncidentResponse/README.md) | Collects evidence (inbox rules, sign-ins, MFA methods), then disables, resets, signs out, removes forwarding and malicious inbox rules |
 | [Restore from Snapshot](Rollback/README.md) | Undoes a mistake: puts a user back the way their before-snapshot recorded (account, groups, attributes, OU) |
 | [User Activity](UserActivity/README.md) | "My password doesn't work": one timeline of sign-ins, SSPR resets, lockouts and changes, with a plain-English summary of what went wrong |
@@ -58,7 +106,7 @@ On-prem AD ──(Entra Connect sync)──► Entra ID ──► Exchange Onlin
 Every script follows the same pipeline and shares the same engine (`Modules/Shared`):
 
 ```
-Input ──► Validate ──► Look up ──► Plan ──► Snapshot ──► Execute (retries) ──► Snapshot ──► Report ──► Alert
+Input --> Validate --> Look up --> Plan --> Snapshot --> Execute (retries) --> Snapshot --> Report --> Alert
           bad rows                  only     before                              after       problems   Teams /
           skipped                   what                                                     first      email
                                     changed
@@ -68,7 +116,7 @@ Input ──► Validate ──► Look up ──► Plan ──► Snapshot ─
 - Nothing changes without `-Apply`
 - Dry run still validates, looks up and plans, so you see exactly what would happen
 
-**Validate → Plan → Execute**
+**Validate, then Plan, then Execute**
 - Every row is validated before anything touches AD or M365
 - Bad rows are skipped and reported, the rest keep going
 - Each user gets a plan (list of actions) that is logged before it runs
